@@ -1,4 +1,5 @@
 from src.conversorER import ConversorER
+import string
 
 
 class AnalizadorLexico:
@@ -17,3 +18,19 @@ class AnalizadorLexico:
                     nome, er = linha.split(":", 1)
                     self.definicoes[nome.strip()] = er.strip()
                     print(f"Adicionando {nome}: {er}")
+
+    def lida_range(self, trecho: str):
+        """
+        Transforma o trecho em seu formato equivalente
+        """
+        if trecho == "[a-z]":
+            return string.ascii_lowercase
+
+        if trecho == "[A-Z]":
+            return string.ascii_uppercase
+
+        if trecho == "[a-zA-Z]":
+            return string.ascii_letters
+
+        if trecho == "[0-9]":
+            return "0123456789"
