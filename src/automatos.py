@@ -17,6 +17,15 @@ class Automato:
         self.estado_inicial: Estado = estado_inicial
         self.estados_finais: set(Estado) = estados_finais
 
+    def adicionar_estados(self, estados_novos, transicoes=()):
+        self.estados.add(estados_novos)
+
+        if len(transicoes) > 0:
+            self.adicionar_transicoes(self, transicoes)
+
+    def adicionar_transicoes(self, transicoes):
+        pass
+
     def print_tabela(self):
         # Ordenar estados e símbolos para apresentação consistente
         estados_ord = sorted(self.estados, key=lambda e: e.nome)
