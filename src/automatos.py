@@ -23,6 +23,10 @@ class Automato:
     def adicionar_transicoes(self, transicoes):
         self.transicoes.update(transicoes)
 
+        for simbolo in transicoes.keys():
+            if simbolo[1] not in self.simbolos:
+                self.simbolos.add(simbolo[1])
+
     def print_tabela(self):
         # Ordenar estados e símbolos para apresentação consistente
         estados_ord = sorted(self.estados, key=lambda e: e.nome)
