@@ -1,31 +1,66 @@
-class Estado:
-    def __init__(self, nome: str):
-        self.nome = nome
+from dataclasses import dataclass
 
-    def get_nome(self):
+
+@dataclass(frozen=True)
+class Estado:
+    nome: str
+
+    def __str__(self):
         return self.nome
+
+    def __repr__(self):
+        return f"Estado({self.nome!r})"
 
 
 class Automato:
-    def __init__(self, estados, simbolos, transicoes, estado_inicial, estados_finais):
-        self.estados: set(Estado) = estados
-        self.simbolos: set(str) = simbolos
-        self.transicoes: dict[tuple(Estado, str), set(Estado)] = (
+    def __init__(
+        self,
+        estados: set[Estado],
+        simbolos: set[str],
+        transicoes: dict[tuple[Estado, str], set[Estado]],
+        estado_inicial: Estado,
+        estados_finais: set[Estado],
+    ):
+        self.estados: set[Estado] = set(estados)
+        self.simbolos: set[str] = set(simbolos)
+        self.transicoes: dict[tuple[Estado, str], set[Estado]] = (
             transicoes  # caso seja possível implementar não determinismo
         )
-        # self.trasicoes: dict[tuple(Estado, str), Estado] = transicoes # caso seja impossível implementar não determinismo
         self.estado_inicial: Estado = estado_inicial
-        self.estados_finais: set(Estado) = estados_finais
+        self.estados_finais: set[Estado] = set(estados_finais)
 
-    def adicionar_estados(self, estados_novos):
-        self.estados.add(estados_novos)
+        # Validações:
+        if self.estado_inicial not in self.estados:
+            raise ValueError("Estado inicial é desconhecido")
+        if not self.estados_finais.issubset(estados):
+            raise ValueError("Algum dos estados finais é desconhecido")
+        for (s, a), dests in self.transicoes.items():
+            if s not in self.estados:
+                raise ValueError(f"transição de estado desconhecido: {s}")
+            if a not in self.simbolos:
+                raise ValueError(f"símbolo da transição desconhecido: {a}")
+            if not set(dests).issubset(self.estados):
+                raise ValueError(
+                    "destinos da transição contêm estado(s) desconhecido(s)"
+                )
 
-    def adicionar_transicoes(self, transicoes):
+    def adicionar_estados(self, estados_novos: set[Estado]) -> None:
+        self.estados.update(estados_novos)
+
+    def adicionar_transicoes(
+        self, transicoes: dict[tuple[Estado, str], set[Estado]]
+    ) -> None:
         self.transicoes.update(transicoes)
 
-        for simbolo in transicoes.keys():
-            if simbolo[1] not in self.simbolos:
-                self.simbolos.add(simbolo[1])
+        for (estado_origem, simbolo), estado_destino in transicoes.items():
+            if simbolo not in self.simbolos:
+                self.simbolos.add(simbolo)
+
+    def transiciona(self, estado_atual: Estado) -> set[Estado]:
+        pass
+
+    def processar(self, palavra: str) -> bool:
+        pass
 
     def print_tabela(self):
         # Ordenar estados e símbolos para apresentação consistente
@@ -104,4 +139,4 @@ class Automato:
                 + 1
             )
         )
-        print("\nLegenda: → = estado inicial, * = estado final, - = sem transição")
+        print("\nLegenda: -> = estado inicial, * = estado final, - = sem transição")
