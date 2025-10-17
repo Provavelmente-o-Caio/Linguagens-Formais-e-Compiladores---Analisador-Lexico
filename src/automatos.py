@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+EPSILON = "ε"
+
 
 @dataclass(frozen=True)
 class Estado:
@@ -56,11 +58,36 @@ class Automato:
             if simbolo not in self.simbolos:
                 self.simbolos.add(simbolo)
 
-    def transiciona(self, estado_atual: Estado) -> set[Estado]:
-        pass
+    def transiciona(self, estados_atuais: set[Estado], simbolo: str) -> set[Estado]:
+        # recebe set de estados para lidar com o não-determinismo
+        novos_estados = set()
+        for e in estados_atuais:
+            novos_estados.update(self.transicoes.get((e, simbolo), set()))
+        return novos_estados
 
     def processar(self, palavra: str) -> bool:
-        pass
+        estados_atuais = self.epsilon_fecho({self.estado_inicial})
+        for simbolo in palavra:
+            estados_atuais = self.epsilon_fecho(
+                self.transiciona(estados_atuais, simbolo)
+            )
+        return any(estado in self.estados_finais for estado in estados_atuais)
+
+    def is_deterministico(self) -> bool:
+        return all(len(destinos) <= 1 for destinos in self.transicoes.values()) and all(
+            simbolo != EPSILON for (_, simbolo), _ in self.transicoes.items()
+        )
+
+    def epsilon_fecho(self, estados: set[Estado]) -> set[Estado]:
+        estados_alcancaveis = set(estados)
+        estados_a_processar = list(estados)
+        while estados_a_processar:
+            atual = estados_a_processar.pop()
+            for novo_estado in self.transiciona(atual, EPSILON):
+                if novo_estado not in estados_alcancaveis:
+                    estados_alcancaveis.add(novo_estado)
+                    estados_a_processar.append(novo_estado)
+        return estados_alcancaveis
 
     def print_tabela(self):
         # Ordenar estados e símbolos para apresentação consistente
