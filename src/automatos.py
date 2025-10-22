@@ -49,6 +49,12 @@ class Automato:
     def adicionar_estados(self, estados_novos: set[Estado]) -> None:
         self.estados.update(estados_novos)
 
+    def adicionar_estados_finais(self, estados_finais_novos: set[Estado]) -> None:
+        if not estados_finais_novos.issubset(self.estados):
+            raise ValueError("Algum dos estados finais é desconhecido")
+
+        self.estados_finais.update(estados_finais_novos)
+
     def adicionar_transicoes(
         self, transicoes: dict[tuple[Estado, str], set[Estado]]
     ) -> None:
@@ -89,10 +95,33 @@ class Automato:
                     estados_a_processar.append(novo_estado)
         return estados_alcancaveis
 
-    def print_tabela(self):
+
+class Handler_Automatos:
+    def uniao(self, automato1: Automato, automato2: Automato) -> Automato:
+        qnovo = Estado("qnovo")
+        automato_uniao = Automato({qnovo}, {}, {}, qnovo, {})
+
+        automato_uniao.adicionar_estados(automato1.estados)
+        automato_uniao.adicionar_estados(automato2.estados)
+
+        automato_uniao.adicionar_transicoes(automato1.transicoes)
+        automato_uniao.adicionar_transicoes(automato2.transicoes)
+
+        automato_uniao.adicionar_transicoes(
+            {
+                (qnovo, EPSILON): {automato1.estado_inicial, automato2.estado_inicial},
+            }
+        )
+
+        automato_uniao.adicionar_estados_finais(automato1.estados_finais)
+        automato_uniao.adicionar_estados_finais(automato2.estados_finais)
+
+        return automato_uniao
+
+    def print_tabela(self, automato: Automato):
         # Ordenar estados e símbolos para apresentação consistente
-        estados_ord = sorted(self.estados, key=lambda e: e.nome)
-        simbolos_ord = sorted(self.simbolos)
+        estados_ord = sorted(automato.estados, key=lambda e: e.nome)
+        simbolos_ord = sorted(automato.simbolos)
 
         # Calcular largura das colunas
         largura_estado = max(len(str(e.nome)) for e in estados_ord)
@@ -102,7 +131,7 @@ class Automato:
         for s in simbolos_ord:
             max_len = len(s)
             for e in estados_ord:
-                destinos = self.transicoes.get((e, s), set())
+                destinos = automato.transicoes.get((e, s), set())
                 if destinos:
                     destinos_str = ", ".join(sorted(str(d.nome) for d in destinos))
                     max_len = max(max_len, len(destinos_str))
@@ -137,9 +166,9 @@ class Automato:
         for estado in estados_ord:
             # Marcar estado inicial com -> e finais com *
             marcador = ""
-            if estado == self.estado_inicial:
+            if estado == automato.estado_inicial:
                 marcador += "→"
-            if estado in self.estados_finais:
+            if estado in automato.estados_finais:
                 marcador += "*"
 
             nome_estado = f"{marcador}{estado.nome}"
@@ -147,7 +176,7 @@ class Automato:
 
             transicoes_linha = []
             for s in simbolos_ord:
-                destinos = self.transicoes.get((estado, s), set())
+                destinos = automato.transicoes.get((estado, s), set())
                 if destinos:
                     destinos_str = ", ".join(sorted(str(d.nome) for d in destinos))
                     transicoes_linha.append(f"{destinos_str:^{larguras_simbolos[s]}}")
