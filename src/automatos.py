@@ -80,16 +80,17 @@ class Automato:
         return any(estado in self.estados_finais for estado in estados_atuais)
 
     def is_deterministico(self) -> bool:
-        return all(len(destinos) <= 1 for destinos in self.transicoes.values()) and all(
-            simbolo != EPSILON for (_, simbolo), _ in self.transicoes.items()
-        )
+        for (estado, simbolo), destinos in self.transicoes.items():
+            if len(destinos) > 1 or simbolo == EPSILON:
+                return False
+        return True
 
     def epsilon_fecho(self, estados: set[Estado]) -> set[Estado]:
         estados_alcancaveis = set(estados)
         estados_a_processar = list(estados)
         while estados_a_processar:
             atual = estados_a_processar.pop()
-            for novo_estado in self.transiciona(atual, EPSILON):
+            for novo_estado in self.transiciona({atual}, EPSILON):
                 if novo_estado not in estados_alcancaveis:
                     estados_alcancaveis.add(novo_estado)
                     estados_a_processar.append(novo_estado)
@@ -98,8 +99,12 @@ class Automato:
 
 class Handler_Automatos:
     def uniao(self, automato1: Automato, automato2: Automato) -> Automato:
-        qnovo = Estado("qnovo")
-        automato_uniao = Automato({qnovo}, {}, {}, qnovo, {})
+        nomes_existentes = {e.nome for e in automato1.estados | automato2.estados}
+        i = 0
+        while f"q_uniao_{i}" in nomes_existentes:
+            i += 1
+        qnovo = Estado(f"q_uniao_{i}")
+        automato_uniao = Automato({qnovo}, set(), {}, qnovo, set())
 
         automato_uniao.adicionar_estados(automato1.estados)
         automato_uniao.adicionar_estados(automato2.estados)
@@ -116,7 +121,70 @@ class Handler_Automatos:
         automato_uniao.adicionar_estados_finais(automato1.estados_finais)
         automato_uniao.adicionar_estados_finais(automato2.estados_finais)
 
+        automato_uniao.simbolos.update(automato1.simbolos)
+        automato_uniao.simbolos.update(automato2.simbolos)
+
         return automato_uniao
+
+    def junta_nome_estados(self, estados: set[Estado]):
+        return "".join(sorted(e.nome for e in estados))
+
+    def determinizar(self, automato: Automato) -> Automato:
+        conjunto_inicial_novo: set[Estado] = automato.epsilon_fecho(
+            {automato.estado_inicial}
+        )
+        q_inicial_novo: Estado = Estado(self.junta_nome_estados(conjunto_inicial_novo))
+
+        dicionario_estados: dict[frozenset[Estado], Estado] = {
+            frozenset(conjunto_inicial_novo): q_inicial_novo
+        }
+
+        automato_determinizado: Automato = Automato(
+            {q_inicial_novo}, automato.simbolos - {EPSILON}, {}, q_inicial_novo, set()
+        )
+
+        nao_processados: list[frozenset[Estado]] = [frozenset(conjunto_inicial_novo)]
+        processados: set[set[Estado]] = set()
+
+        while nao_processados:
+            conjunto_atual = nao_processados.pop()
+
+            if conjunto_atual in processados:
+                continue
+            processados.add(conjunto_atual)
+
+            estado_atual = dicionario_estados[frozenset(conjunto_atual)]
+
+            for simbolo in automato_determinizado.simbolos:
+                conjunto_destino = set()
+
+                for estado_afd in conjunto_atual:
+                    destinos = automato.transicoes.get((estado_afd, simbolo), set())
+                    conjunto_destino.update(destinos)
+
+                conjunto_destino = automato.epsilon_fecho(conjunto_destino)
+
+                if not conjunto_destino:
+                    continue
+
+                if frozenset(conjunto_destino) not in dicionario_estados:
+                    estado_novo = Estado(self.junta_nome_estados(conjunto_destino))
+                    dicionario_estados[frozenset(conjunto_destino)] = estado_novo
+
+                    automato_determinizado.adicionar_estados({estado_novo})
+                    nao_processados.append(frozenset(conjunto_destino))
+
+                estado_destino = dicionario_estados[frozenset(conjunto_destino)]
+
+                automato_determinizado.adicionar_transicoes(
+                    {(estado_atual, simbolo): {estado_destino}}
+                )
+
+        for conjunto, estado in dicionario_estados.items():
+            if any(e in automato.estados_finais for e in conjunto):
+                automato_determinizado.adicionar_estados_finais({estado})
+
+        return automato_determinizado
 
     def print_tabela(self, automato: Automato):
         # Ordenar estados e símbolos para apresentação consistente
