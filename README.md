@@ -4,7 +4,7 @@
 - [ ] Conversão de expressão regular para autômato finito determinístico (Algoritmo apresentado no livro de Aho).
 - [ ] Minimização de autômatos.
 - [x] União de Autômatos via epsilon-transição.
-- [ ] Determinação de Autômatos.
+- [x] Determinação de Autômatos.
 ### Interface
 - [ ] Inclusão de expressões regulares para todos os padrões de tokens, usando definições regulares.
 - [ ] Para cada ER deve ser gerado um AFD correspondente.
