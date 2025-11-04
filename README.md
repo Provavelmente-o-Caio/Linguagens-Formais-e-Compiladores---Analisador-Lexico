@@ -2,7 +2,7 @@
 
 ## Requisitos
 - [ ] Conversão de expressão regular para autômato finito determinístico (Algoritmo apresentado no livro de Aho).
-- [ ] Minimização de autômatos.
+- [x] Minimização de autômatos.
 - [x] União de Autômatos via epsilon-transição.
 - [x] Determinação de Autômatos.
 ### Interface
