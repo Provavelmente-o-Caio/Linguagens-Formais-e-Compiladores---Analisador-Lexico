@@ -139,7 +139,7 @@ class Automato:
         return estados_alcancaveis
 
 
-class Handler_Automatos:
+class HandlerAutomatos:
     def uniao(self, automato1: Automato, automato2: Automato) -> Automato:
         nomes_existentes = {e.nome for e in automato1.estados | automato2.estados}
         i = 0
@@ -168,6 +168,7 @@ class Handler_Automatos:
 
         return automato_uniao
 
+    @staticmethod
     def junta_nome_estados(self, estados: set[Estado]):
         return "".join(sorted(e.nome for e in estados))
 

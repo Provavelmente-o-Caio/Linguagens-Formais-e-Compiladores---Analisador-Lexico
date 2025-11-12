@@ -1,4 +1,4 @@
-from src.automatos import Estado, Automato, Handler_Automatos, EPSILON
+from src.automatos import Estado, Automato, HandlerAutomatos, EPSILON
 
 # =====================================================
 # Testes básicos do comportamento do autômato
@@ -61,7 +61,7 @@ def test_is_deterministico():
 
 
 # =====================================================
-# Testes para os métodos do Handler_Automatos
+# Testes para os métodos do HandlerAutomatos
 # =====================================================
 
 
@@ -72,7 +72,7 @@ def test_uniao_basico():
     q2, q3 = Estado("q2"), Estado("q3")
     a2 = Automato({q2, q3}, {"b"}, {(q2, "b"): {q3}}, q2, {q3})
 
-    handler = Handler_Automatos()
+    handler = HandlerAutomatos()
     a_uniao = handler.uniao(a1, a2)
 
     assert any(estado.nome.startswith("q_uniao") for estado in a_uniao.estados)
@@ -91,7 +91,7 @@ def test_determinizar_nfa_simples():
         {q1},
     )
 
-    handler = Handler_Automatos()
+    handler = HandlerAutomatos()
     dfa = handler.determinizar(a)
 
     assert dfa.is_deterministico() is True
@@ -113,7 +113,7 @@ def test_remove_estados_inalcancaveis():
         q0,
         {q1},
     )
-    handler = Handler_Automatos()
+    handler = HandlerAutomatos()
     novo = handler.remove_estados_inalcancaveis(a)
     assert q2 not in novo.estados
     assert q1 in novo.estados
@@ -136,7 +136,7 @@ def test_remove_estados_mortos_detecta_bug():
         q0,
         {q2},
     )
-    handler = Handler_Automatos()
+    handler = HandlerAutomatos()
     result = handler.remove_estados_mortos(a)
     assert q0 in result.estados
     assert q1 in result.estados
@@ -156,6 +156,6 @@ def test_remove_estados_mortos_com_ciclo_infinito():
         q0,
         set(),  # nenhum final
     )
-    handler = Handler_Automatos()
+    handler = HandlerAutomatos()
     novo = handler.remove_estados_mortos(a)
     assert len(novo.estados) == 0  # tudo deve ser removido

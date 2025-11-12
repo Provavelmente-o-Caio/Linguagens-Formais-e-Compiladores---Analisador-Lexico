@@ -1,5 +1,5 @@
 import pytest
-from src.automatos import Estado, Automato, Handler_Automatos
+from src.automatos import Estado, Automato, HandlerAutomatos
 
 
 # ===========================================================
@@ -148,7 +148,7 @@ def test_token_invalido_retorna_erro(automatos_id_num):
 
 def test_uniao_lexica(automatos_id_num):
     """Simula a união dos dois AFDs e verifica se ambos os padrões funcionam."""
-    handler = Handler_Automatos()
+    handler = HandlerAutomatos()
     id_auto, num_auto = automatos_id_num
     uniao = handler.uniao(id_auto, num_auto)
 
