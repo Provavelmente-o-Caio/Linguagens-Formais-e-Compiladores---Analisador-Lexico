@@ -40,8 +40,23 @@ class NodoER:
 
 class ExpressaoRegular:
     def __init__(self, expressao: str) -> None:
-        self.expressao: list[str] = list(f"({expressao})#")
+        self.expressao: list[str] = list(f"({self.formatar_expressao(expressao)})#")
         self.posicao: int = 1
+
+    def formatar_expressao(self, expressao: str) -> str:
+        resultado: list[str] = []
+        anterior: str | None = None
+
+        for atual in expressao:
+            if anterior:
+                if (anterior.isalnum() or anterior in [")", "*", "?"]) and (
+                    atual.isalnum() or atual == "("
+                ):
+                    resultado.append(".")
+            resultado.append(atual)
+            anterior = atual
+
+        return "".join(resultado)
 
     def parse(self) -> NodoER:
         nodo: NodoER = self.parse_concatenacao()
@@ -61,9 +76,18 @@ class ExpressaoRegular:
 
     def parse_kleene(self) -> NodoER:
         nodo: NodoER = self.parse_atomico()
-        while self.olhar() == "*":
-            token = self.consume("*")
-            nodo = NodoER(token, nodo_esquerda=nodo)
+        while self.olhar() in ["*", "?", "+"]:
+            if self.olhar() == "+":
+                # a+a = a.a*
+                token = self.consume("+")
+                nodo = NodoER(
+                    ".",
+                    nodo_esquerda=nodo,
+                    nodo_direita=NodoER("*", nodo_esquerda=nodo),
+                )
+            else:
+                token = self.consume(self.olhar())
+                nodo = NodoER(token, nodo_esquerda=nodo)
         return nodo
 
     def parse_atomico(self) -> NodoER:
