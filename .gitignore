@@ -212,3 +212,4 @@ __marimo__/
 # Pessoal
 ./testes
 ./shell.nix
+.idea/
