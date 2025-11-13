@@ -168,7 +168,6 @@ class HandlerAutomatos:
 
         return automato_uniao
 
-    @staticmethod
     def junta_nome_estados(self, estados: set[Estado]):
         return "".join(sorted(e.nome for e in estados))
 

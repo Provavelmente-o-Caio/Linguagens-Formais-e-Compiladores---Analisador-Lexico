@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import override
 
 EPSILON = "ε"
@@ -14,9 +14,9 @@ class NodoER:
     # para a árvore
     pos: int = 0
     nullable: bool = False
-    firstpos: set[NodoER] = set()
-    followpos: set[NodoER] = set()
-    lastpos: set[NodoER] = set()
+    firstpos: set[NodoER] = field(default_factory=set)
+    followpos: set[NodoER] = field(default_factory=set)
+    lastpos: set[NodoER] = field(default_factory=set)
 
     # ligações
     nodo_esquerda: NodoER | None = None
@@ -38,17 +38,26 @@ class NodoER:
             return self.tipo
 
 
-class Expressao_Regular:
+class ExpressaoRegular:
     def __init__(self, expressao: str) -> None:
         self.expressao: list[str] = list(f"({expressao})#")
         self.posicao: int = 1
 
     def parse(self) -> NodoER:
-        pass
+        nodo: NodoER = self.parse_concatenacao()
+        while self.olhar() == "|":
+            token = self.consume("|")
+            nodo = NodoER(
+                token, nodo_esquerda=nodo, nodo_direita=self.parse_concatenacao()
+            )
+        return nodo
 
     def parse_concatenacao(self) -> NodoER:
         nodo = self.parse_kleene()
-        while
+        while self.olhar() == ".":
+            token = self.consume(".")
+            nodo = NodoER(token, nodo_esquerda=nodo, nodo_direita=self.parse_kleene())
+        return nodo
 
     def parse_kleene(self) -> NodoER:
         nodo: NodoER = self.parse_atomico()
@@ -58,7 +67,7 @@ class Expressao_Regular:
         return nodo
 
     def parse_atomico(self) -> NodoER:
-        if self.olhar == "(":
+        if self.olhar() == "(":
             token = self.consume("(")
             nodo = self.parse()
             token = self.consume(")")
@@ -69,9 +78,8 @@ class Expressao_Regular:
             self.posicao += 1
             return nodo
 
-
     def consume(self, esperado: str | None) -> str:
-        if self.expressao:
+        if not self.expressao:
             raise ValueError("Erro de expressão era esperado")
         ch: str = self.expressao.pop(0)
         if esperado and esperado != ch:
