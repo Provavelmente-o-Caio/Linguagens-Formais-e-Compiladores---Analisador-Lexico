@@ -101,6 +101,7 @@ class ExpressaoRegular:
         # Adiciona concatenação explícita com # para marcar fim da expressão
         self.expressao: list[str] = list(f"({self.formatar_expressao(expressao)}).#")
         self.posicao: int = 1
+        self.folhas: dict[int, NodoER] = {}
 
     def formatar_expressao(self, expressao: str) -> str:
         """Insere concatenação explícita (.)"""
@@ -177,8 +178,9 @@ class ExpressaoRegular:
 
         # Qualquer outro símbolo (incluindo '#' de fim) é tratado como SIMBOLO
         # O '#' é adicionado automaticamente no __init__ e recebe uma posição
-        token = self.consume(None)
-        nodo = NodoER("SIMBOLO", token, self.posicao)
+        token: str = self.consume(None)
+        nodo: NodoER = NodoER("SIMBOLO", token, self.posicao)
+        self.folhas[self.posicao] = nodo
         self.posicao += 1
         return nodo
 
@@ -201,7 +203,8 @@ class ExpressaoRegular:
             # Epsilon mantém posição -1, outros símbolos recebem nova posição
             if nodo.valor == EPSILON:
                 return NodoER("SIMBOLO", EPSILON, -1)
-            novo = NodoER("SIMBOLO", nodo.valor, self.posicao)
+            novo: NodoER = NodoER("SIMBOLO", nodo.valor, self.posicao)
+            self.folhas[self.posicao] = novo
             self.posicao += 1
             return novo
 
