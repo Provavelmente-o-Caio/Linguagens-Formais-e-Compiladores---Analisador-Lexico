@@ -13,14 +13,71 @@ class NodoER:
 
     # para a árvore
     pos: int = 0
-    nullable: bool = False
-    firstpos: set[NodoER] = field(default_factory=set)
-    followpos: set[NodoER] = field(default_factory=set)
-    lastpos: set[NodoER] = field(default_factory=set)
+    nullable: bool = True
+    firstpos: set[int] = field(default_factory=set)
+    followpos: set[int] = field(default_factory=set)
+    lastpos: set[int] = field(default_factory=set)
 
     # ligações
     nodo_esquerda: NodoER | None = None
     nodo_direita: NodoER | None = None
+
+    def calcula_posicoes(self) -> None:
+        if self.tipo == "SIMBOLO":
+            if self.valor == EPSILON:
+                self.nullable = True
+                self.firstpos = set()
+                self.lastpos = set()
+            else:
+                self.nullable = False
+                self.firstpos = {self.pos}
+                self.lastpos = {self.pos}
+        elif self.tipo == "|":
+            if self.nodo_esquerda and self.nodo_direita:
+                self.nullable = (
+                    self.nodo_esquerda.nullable or self.nodo_direita.nullable
+                )
+                self.firstpos = self.nodo_esquerda.firstpos.union(
+                    self.nodo_direita.firstpos
+                )
+                self.lastpos = self.nodo_esquerda.lastpos.union(
+                    self.nodo_direita.lastpos
+                )
+            else:
+                raise ValueError(
+                    "Os ramos de uma união não estão completamente preenchidos"
+                )
+        elif self.tipo == ".":
+            if self.nodo_esquerda and self.nodo_direita:
+                self.nullable = (
+                    self.nodo_esquerda.nullable and self.nodo_direita.nullable
+                )
+                if self.nodo_esquerda.nullable:
+                    self.firstpos = self.nodo_esquerda.firstpos.union(
+                        self.nodo_direita.firstpos
+                    )
+                else:
+                    self.firstpos = self.nodo_esquerda.firstpos
+
+                if self.nodo_direita.nullable:
+                    self.lastpos = self.nodo_direita.lastpos.union(
+                        self.nodo_esquerda.lastpos
+                    )
+                else:
+                    self.lastpos = self.nodo_direita.lastpos
+            else:
+                raise ValueError(
+                    "Os ramos de uma concatenação não estão completamente preenchidos"
+                )
+        elif self.tipo == "*":
+            if self.nodo_esquerda:
+                self.nullable = True
+                self.firstpos = self.nodo_esquerda.firstpos
+                self.lastpos = self.nodo_esquerda.lastpos
+            else:
+                raise ValueError(
+                    "Os ramos de um fecho não estão completamente preenchidos"
+                )
 
     @override
     def __repr__(self) -> str:
@@ -90,7 +147,7 @@ class ExpressaoRegular:
             elif token == "?":
                 # a? => (a|ε)
                 # Cria nodo epsilon com posição -1 (não é folha real)
-                nodo_epsilon = NodoER("SIMBOLO", EPSILON, -1)
+                nodo_epsilon = NodoER("SIMBOLO", EPSILON, 0)
                 # Cria união
                 nodo = NodoER("|", nodo_esquerda=nodo, nodo_direita=nodo_epsilon)
             elif token == "+":
