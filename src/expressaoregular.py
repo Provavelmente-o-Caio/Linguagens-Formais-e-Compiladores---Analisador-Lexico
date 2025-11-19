@@ -219,3 +219,34 @@ class ExpressaoRegular:
         return NodoER(
             nodo.tipo, nodo.valor, nodo_esquerda=esquerda, nodo_direita=direita
         )
+
+    def calcular_followpos(self, raiz: NodoER | None) -> None:
+        if raiz is None:
+            return
+
+        self.calcular_followpos(raiz.nodo_esquerda)
+        self.calcular_followpos(raiz.nodo_direita)
+
+        if raiz.tipo == ".":
+            if raiz.nodo_esquerda and raiz.nodo_direita:
+                for i in raiz.nodo_esquerda.lastpos:
+                    self.folhas[i].followpos.update(raiz.nodo_direita.firstpos)
+        elif raiz.tipo == "*":
+            for i in raiz.lastpos:
+                self.folhas[i].followpos.update(raiz.firstpos)
+
+    def visitar(self, n: NodoER | None):
+        if n is None:
+            return
+        else:
+            self.visitar(n.nodo_esquerda)
+            self.visitar(n.nodo_direita)
+            n.calcula_posicoes()
+
+    def processar(self) -> NodoER:
+        raiz = self.parse()
+
+        self.visitar(raiz)
+        self.calcular_followpos(raiz)
+
+        return raiz
