@@ -385,6 +385,7 @@ class HandlerAutomatos:
         automato = self.remove_estados_equivalentes(automato)
         return automato
 
+    # Essa função não é mais usada, já que é feito uma tabela direto na CLI com rich (remover?)
     def print_tabela(self, automato: Automato):
         # Ordenar estados e símbolos para apresentação consistente
         estados_ord = sorted(automato.estados, key=lambda e: e.nome)
