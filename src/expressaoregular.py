@@ -185,6 +185,9 @@ class ExpressaoRegular:
         return nodo
 
     def consume(self, esperado: str | None) -> str:
+        """
+        retorna o caractere esperado e o remove da entrada da expressão se ele existir nessa
+        """
         if not self.expressao:
             raise ValueError("Erro de expressão era esperado")
         ch: str = self.expressao.pop(0)
@@ -195,6 +198,9 @@ class ExpressaoRegular:
         return ch
 
     def olhar(self) -> str | None:
+        """
+        retorna o primeiro caractere da que sobra da entrada da expressão
+        """
         return self.expressao[0] if self.expressao else None
 
     def copiar_subarvore(self, nodo: NodoER) -> NodoER:
@@ -221,6 +227,9 @@ class ExpressaoRegular:
         )
 
     def calcular_followpos(self, raiz: NodoER | None) -> None:
+        """
+        Calcula o conjunto followpos de todos os nodos da árvore
+        """
         if raiz is None:
             return
 
@@ -236,6 +245,9 @@ class ExpressaoRegular:
                 self.folhas[i].followpos.update(raiz.firstpos)
 
     def visitar(self, n: NodoER | None):
+        """
+        Calcula as posições de um nodo e de seus nodos abaixo recursivamente
+        """
         if n is None:
             return
         else:
@@ -244,6 +256,9 @@ class ExpressaoRegular:
             n.calcula_posicoes()
 
     def processar(self) -> NodoER:
+        """
+        Calcula a árvore para uma expressão regular, retornando a raiz desta.
+        """
         raiz = self.parse()
 
         self.visitar(raiz)

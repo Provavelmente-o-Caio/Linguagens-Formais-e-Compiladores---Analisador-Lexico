@@ -1,10 +1,10 @@
-from src.conversorER import ConversorER
+from src.conversorER import ConversorER_AFD
 import string
 
 
 class AnalizadorLexico:
     def __init__(self):
-        self.conversor: ConversorER = ConversorER()
+        self.conversor: ConversorER_AFD = ConversorER_AFD()
         self.definicoes: dict[str, str] = {}
 
     def ler_entradas(self, arquivo: str):
