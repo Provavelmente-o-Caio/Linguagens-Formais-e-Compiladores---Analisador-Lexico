@@ -234,7 +234,7 @@ class HandlerAutomatos:
 
         return automato_determinizado
 
-    def determinizar_com_mapemaneto(self, automato: Automato) -> tuple[Automato, dict[Estado, frozenset[Estado]]]:
+    def determinizar_com_mapeamento(self, automato: Automato) -> tuple[Automato, dict[Estado, frozenset[Estado]]]:
         mapeamento: dict[Estado, frozenset[Estado]] = {}
         if automato.is_deterministico():
             mapeamento = {estado: frozenset([estado]) for estado in automato.estados}

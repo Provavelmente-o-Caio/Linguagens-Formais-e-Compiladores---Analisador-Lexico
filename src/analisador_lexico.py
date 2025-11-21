@@ -1,9 +1,7 @@
 import re
 
+from src.automatos import Automato, Estado, HandlerAutomatos
 from src.conversorER import ConversorER_AFD
-from src.automatos import Estado, HandlerAutomatos, Automato
-import string
-
 from src.expressaoregular import ExpressaoRegular
 
 
@@ -60,7 +58,7 @@ class AnalisadorLexico:
         inicio_letra = inicio.isalpha()
         fim_letra = fim.isalpha()
         inicio_digito = inicio.isdigit()
-        fim_digito = fim.isDigit()
+        fim_digito = fim.isdigit()
 
         if inicio_letra and not fim_letra:
             raise ValueError(
@@ -161,7 +159,7 @@ class AnalisadorLexico:
         for afd in afds_minimizados[1:]:
             automato_unido = self.handler_automatos.uniao(automato_unido, afd)
 
-        automato_unido, mapeamento = self.handler_automatos.determinizar_com_mapemaneto(automato_unido)
+        automato_unido, mapeamento = self.handler_automatos.determinizar_com_mapeamento(automato_unido)
         self.atualizar_mapeamento(mapeamento)
 
         self.automato_unificado = automato_unido
@@ -216,7 +214,7 @@ class AnalisadorLexico:
             return palavra, "erro!"
 
     def atualizar_mapeamento(self, mapeamento: dict[Estado, frozenset[Estado]]):
-        novo_mapa = []
+        novo_mapa = {}
 
         for estado_determinizado, conjunto_original in mapeamento.items():
             tokens_possiveis = []
