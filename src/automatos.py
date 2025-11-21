@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import override
 
-EPSILON = "ε"
+EPSILON = "&"
 
 
 @dataclass(frozen=True)

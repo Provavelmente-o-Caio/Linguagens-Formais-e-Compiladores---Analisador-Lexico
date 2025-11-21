@@ -7,7 +7,7 @@ import string
 from src.expressaoregular import ExpressaoRegular
 
 
-class AnalizadorLexico:
+class AnalisadorLexico:
     def __init__(self):
         self.conversor: ConversorER_AFD = ConversorER_AFD()
         self.handler_automatos: HandlerAutomatos = HandlerAutomatos()
@@ -166,7 +166,7 @@ class AnalizadorLexico:
 
         self.automato_unificado = automato_unido
 
-    def analisar(self, arquivo: str) -> list[tuple[str, str]]:
+    def analisar(self, arquivo: str, arquivo_saida: str | None = None) -> list[tuple[str, str]]:
         tokens: list[tuple[str, str]] = []
         with open(arquivo, "r") as f:
             for num_linha, linha in enumerate(f, 1):
@@ -181,6 +181,12 @@ class AnalizadorLexico:
                     token = self.tokenizar(palavra)
                     tokens.append(token)
                     print(f"<{token[0]}, {token[1]}>")
+
+        if arquivo_saida:
+            with open(arquivo_saida, "w") as f:
+                for token in tokens:
+                    f.write(f"{token[0]} -> {token[1]}\n")
+            print(f"Tokens salvos em {arquivo_saida}")
 
         return tokens
 
@@ -204,7 +210,7 @@ class AnalizadorLexico:
                 ultima_posicao_valida = i
 
         if ultimo_estado_final and ultima_posicao_valida == len(palavra) - 1:
-            padrao = self.mapa_estados_padroes[estado_atual]
+            padrao = self.mapa_estados_padroes.get(ultimo_estado_final, "desconhecido")
             return palavra, padrao
         else:
             return palavra, "erro!"
@@ -220,7 +226,14 @@ class AnalizadorLexico:
                     if token not in tokens_possiveis:
                         tokens_possiveis.append(token)
 
-        if tokens_possiveis:
-            novo_mapa[estado_determinizado] = tokens_possiveis[0]
+            if tokens_possiveis:
+                novo_mapa[estado_determinizado] = tokens_possiveis[0]
 
         self.mapa_estados_padroes = novo_mapa
+
+    def visualizar_automato(self):
+        if not self.automato_unificado:
+            print("Nenhum automato foi gerado")
+            return
+
+        self.handler_automatos.print_tabela(self.automato_unificado)

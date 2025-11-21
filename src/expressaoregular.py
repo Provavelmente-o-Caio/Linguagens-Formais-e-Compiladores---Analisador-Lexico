@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import override
 
-EPSILON = "ε"
+EPSILON = "&"
 
 
 @dataclass
@@ -35,7 +35,7 @@ class NodoER:
         elif self.tipo == "|":
             if self.nodo_esquerda and self.nodo_direita:
                 self.nullable = (
-                    self.nodo_esquerda.nullable or self.nodo_direita.nullable
+                        self.nodo_esquerda.nullable or self.nodo_direita.nullable
                 )
                 self.firstpos = self.nodo_esquerda.firstpos.union(
                     self.nodo_direita.firstpos
@@ -50,7 +50,7 @@ class NodoER:
         elif self.tipo == ".":
             if self.nodo_esquerda and self.nodo_direita:
                 self.nullable = (
-                    self.nodo_esquerda.nullable and self.nodo_direita.nullable
+                        self.nodo_esquerda.nullable and self.nodo_direita.nullable
                 )
                 if self.nodo_esquerda.nullable:
                     self.firstpos = self.nodo_esquerda.firstpos.union(
@@ -111,7 +111,7 @@ class ExpressaoRegular:
         for atual in expressao:
             if anterior:
                 if (anterior.isalnum() or anterior in [")", "*", "+", "?"]) and (
-                    atual.isalnum() or atual == "("
+                        atual.isalnum() or atual == "("
                 ):
                     resultado.append(".")
             resultado.append(atual)
