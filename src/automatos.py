@@ -19,12 +19,13 @@ class Estado:
 
 class Automato:
     def __init__(
-        self,
-        estados: set[Estado],
-        simbolos: set[str],
-        transicoes: dict[tuple[Estado, str], set[Estado]],
-        estado_inicial: Estado,
-        estados_finais: set[Estado],
+            self,
+            estados: set[Estado],
+            simbolos: set[str],
+            transicoes: dict[tuple[Estado, str], set[Estado]],
+            estado_inicial: Estado,
+            estados_finais: set[Estado],
+            nome_token: str = "",
     ):
         self.estados: set[Estado] = set(estados)
         self.simbolos: set[str] = set(simbolos)
@@ -33,6 +34,7 @@ class Automato:
         )
         self.estado_inicial: Estado = estado_inicial
         self.estados_finais: set[Estado] = set(estados_finais)
+        self.nome_token = nome_token
 
         # Validações:
         if len(self.estados):
@@ -65,7 +67,7 @@ class Automato:
         self.estados_finais.update(estados_finais_novos)
 
     def adicionar_transicoes(
-        self, transicoes: dict[tuple[Estado, str], set[Estado]]
+            self, transicoes: dict[tuple[Estado, str], set[Estado]]
     ) -> None:
         self.transicoes.update(transicoes)
 
@@ -92,7 +94,7 @@ class Automato:
         return any(estado in self.estados_finais for estado in estados_atuais)
 
     def alcanca(
-        self, estados_atuais: set[Estado], estados_destino: set[Estado]
+            self, estados_atuais: set[Estado], estados_destino: set[Estado]
     ) -> bool:
         """
         Retorna se algum dos estados de entrada atinge algum dos estados destino
@@ -231,6 +233,71 @@ class HandlerAutomatos:
                 automato_determinizado.adicionar_estados_finais({estado})
 
         return automato_determinizado
+
+    def determinizar_com_mapemaneto(self, automato: Automato) -> tuple[Automato, dict[Estado, frozenset[Estado]]]:
+        mapeamento: dict[Estado, frozenset[Estado]] = {}
+        if automato.is_deterministico():
+            mapeamento = {estado: frozenset([estado]) for estado in automato.estados}
+            return automato, mapeamento
+
+        conjunto_inicial_novo: set[Estado] = automato.epsilon_fecho(
+            {automato.estado_inicial}
+        )
+        q_inicial_novo: Estado = Estado(self.junta_nome_estados(conjunto_inicial_novo))
+
+        dicionario_estados: dict[frozenset[Estado], Estado] = {
+            frozenset(conjunto_inicial_novo): q_inicial_novo
+        }
+
+        automato_determinizado: Automato = Automato(
+            {q_inicial_novo}, automato.simbolos - {EPSILON}, {}, q_inicial_novo, set()
+        )
+
+        nao_processados: list[frozenset[Estado]] = [frozenset(conjunto_inicial_novo)]
+        processados: set[frozenset[Estado]] = set()
+
+        while nao_processados:
+            conjunto_atual = nao_processados.pop()
+
+            if conjunto_atual in processados:
+                continue
+
+            processados.add(conjunto_atual)
+
+            estado_atual = dicionario_estados[frozenset(conjunto_atual)]
+
+            for simbolo in automato_determinizado.simbolos:
+                conjunto_destino: set[Estado] = set()
+
+                for estado_afd in conjunto_atual:
+                    destinos = automato.transicoes.get((estado_afd, simbolo), set())
+                    conjunto_destino.update(destinos)
+
+                conjunto_destino = automato.epsilon_fecho(conjunto_destino)
+
+                if not conjunto_destino:
+                    continue
+
+                if frozenset(conjunto_destino) not in dicionario_estados:
+                    estado_novo = Estado(self.junta_nome_estados(conjunto_destino))
+                    dicionario_estados[frozenset(conjunto_destino)] = estado_novo
+
+                    automato_determinizado.adicionar_estados({estado_novo})
+                    nao_processados.append(frozenset(conjunto_destino))
+
+                estado_destino = dicionario_estados[frozenset(conjunto_destino)]
+
+                automato_determinizado.adicionar_transicoes(
+                    {(estado_atual, simbolo): {estado_destino}}
+                )
+
+        for conjunto, estado in dicionario_estados.items():
+            if any(e in automato.estados_finais for e in conjunto):
+                automato_determinizado.adicionar_estados_finais({estado})
+
+        mapeamento = {estado_novo: conjunto_original for conjunto_original, estado_novo in dicionario_estados.items()}
+
+        return automato_determinizado, mapeamento
 
     def remove_estados_inalcancaveis(self, automato: Automato) -> Automato:
         # utilizando a função transiciona preciso remover os estados que nunca alcanço a partir de nenhuma transição
@@ -409,10 +476,10 @@ class HandlerAutomatos:
         print(
             "="
             * (
-                largura_estado
-                + sum(larguras_simbolos.values())
-                + len(simbolos_ord) * 3
-                + 1
+                    largura_estado
+                    + sum(larguras_simbolos.values())
+                    + len(simbolos_ord) * 3
+                    + 1
             )
         )
 
@@ -422,10 +489,10 @@ class HandlerAutomatos:
         print(
             "-"
             * (
-                largura_estado
-                + sum(larguras_simbolos.values())
-                + len(simbolos_ord) * 3
-                + 1
+                    largura_estado
+                    + sum(larguras_simbolos.values())
+                    + len(simbolos_ord) * 3
+                    + 1
             )
         )
 
@@ -456,10 +523,10 @@ class HandlerAutomatos:
         print(
             "="
             * (
-                largura_estado
-                + sum(larguras_simbolos.values())
-                + len(simbolos_ord) * 3
-                + 1
+                    largura_estado
+                    + sum(larguras_simbolos.values())
+                    + len(simbolos_ord) * 3
+                    + 1
             )
         )
         print("\nLegenda: -> = estado inicial, * = estado final, - = sem transição")
