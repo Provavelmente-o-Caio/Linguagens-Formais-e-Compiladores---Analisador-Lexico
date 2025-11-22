@@ -19,13 +19,13 @@ class Estado:
 
 class Automato:
     def __init__(
-            self,
-            estados: set[Estado],
-            simbolos: set[str],
-            transicoes: dict[tuple[Estado, str], set[Estado]],
-            estado_inicial: Estado,
-            estados_finais: set[Estado],
-            nome_token: str = "",
+        self,
+        estados: set[Estado],
+        simbolos: set[str],
+        transicoes: dict[tuple[Estado, str], set[Estado]],
+        estado_inicial: Estado,
+        estados_finais: set[Estado],
+        nome_token: str = "",
     ):
         self.estados: set[Estado] = set(estados)
         self.simbolos: set[str] = set(simbolos)
@@ -67,7 +67,7 @@ class Automato:
         self.estados_finais.update(estados_finais_novos)
 
     def adicionar_transicoes(
-            self, transicoes: dict[tuple[Estado, str], set[Estado]]
+        self, transicoes: dict[tuple[Estado, str], set[Estado]]
     ) -> None:
         self.transicoes.update(transicoes)
 
@@ -94,7 +94,7 @@ class Automato:
         return any(estado in self.estados_finais for estado in estados_atuais)
 
     def alcanca(
-            self, estados_atuais: set[Estado], estados_destino: set[Estado]
+        self, estados_atuais: set[Estado], estados_destino: set[Estado]
     ) -> bool:
         """
         Retorna se algum dos estados de entrada atinge algum dos estados destino
@@ -234,7 +234,9 @@ class HandlerAutomatos:
 
         return automato_determinizado
 
-    def determinizar_com_mapeamento(self, automato: Automato) -> tuple[Automato, dict[Estado, frozenset[Estado]]]:
+    def determinizar_com_mapeamento(
+        self, automato: Automato
+    ) -> tuple[Automato, dict[Estado, frozenset[Estado]]]:
         mapeamento: dict[Estado, frozenset[Estado]] = {}
         if automato.is_deterministico():
             mapeamento = {estado: frozenset([estado]) for estado in automato.estados}
@@ -295,7 +297,10 @@ class HandlerAutomatos:
             if any(e in automato.estados_finais for e in conjunto):
                 automato_determinizado.adicionar_estados_finais({estado})
 
-        mapeamento = {estado_novo: conjunto_original for conjunto_original, estado_novo in dicionario_estados.items()}
+        mapeamento = {
+            estado_novo: conjunto_original
+            for conjunto_original, estado_novo in dicionario_estados.items()
+        }
 
         return automato_determinizado, mapeamento
 
@@ -375,6 +380,7 @@ class HandlerAutomatos:
 
         while dividindo:
             dividindo = False
+            novos_grupos = []
 
             for grupo in grupos:
                 representacoes: dict[tuple[int | None, ...], set[Estado]] = {}
@@ -476,10 +482,10 @@ class HandlerAutomatos:
         print(
             "="
             * (
-                    largura_estado
-                    + sum(larguras_simbolos.values())
-                    + len(simbolos_ord) * 3
-                    + 1
+                largura_estado
+                + sum(larguras_simbolos.values())
+                + len(simbolos_ord) * 3
+                + 1
             )
         )
 
@@ -489,10 +495,10 @@ class HandlerAutomatos:
         print(
             "-"
             * (
-                    largura_estado
-                    + sum(larguras_simbolos.values())
-                    + len(simbolos_ord) * 3
-                    + 1
+                largura_estado
+                + sum(larguras_simbolos.values())
+                + len(simbolos_ord) * 3
+                + 1
             )
         )
 
@@ -523,10 +529,10 @@ class HandlerAutomatos:
         print(
             "="
             * (
-                    largura_estado
-                    + sum(larguras_simbolos.values())
-                    + len(simbolos_ord) * 3
-                    + 1
+                largura_estado
+                + sum(larguras_simbolos.values())
+                + len(simbolos_ord) * 3
+                + 1
             )
         )
         print("\nLegenda: -> = estado inicial, * = estado final, - = sem transição")
