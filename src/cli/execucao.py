@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from rich.console import Console
 from rich.prompt import Prompt
 from rich.panel import Panel
@@ -19,16 +21,16 @@ def tela_execucao(analisador):
         table.add_row("1", "Carregar arquivo de texto fonte")
         table.add_row("2", "Analisar texto carregado")
         table.add_row("3", "Listar tokens gerados")
-        table.add_row("4", "Exportar tokens para arquivo")
+        table.add_row("4", "Exportar tokens para arquivo de saída")
         table.add_row("0", "Voltar")
 
         console.print(table)
         op = Prompt.ask("\nSelecione", choices=["0","1","2","3","4"], default="0")
 
         if op == "1":
-            path = Prompt.ask("Caminho do arquivo (ex: tests/input_exemplo_1.txt)")
+            path = Prompt.ask("Caminho do arquivo (ex: tests/input_basic_1.txt)")
             if not path:
-                path = "tests/input_exemplo_1.txt"
+                path = "tests/input_basic_1.txt"
             try:
                 with open(path, "r", encoding="utf-8") as f:
                     analisador.entrada_texto = f.read()
@@ -41,9 +43,13 @@ def tela_execucao(analisador):
                 console.print("[yellow]Nenhum texto carregado. Carregue um arquivo primeiro.[/yellow]")
                 input("ENTER para continuar...")
                 continue
-            # requer que o analisador possua um método para executar usando a tabela léxica
-            # WIP
-            pass
+            try:
+                tokens = analisador.analisar()
+                analisador.ultima_lista_tokens = tokens
+                console.print(f"[green]Análise concluída! {len(tokens)} tokens gerados.[/green]")
+            except Exception as e:
+                console.print(f"[red]Erro durante a análise: {e}[/red]")
+            input("ENTER para continuar...")
         elif op == "3":
             tokens = getattr(analisador, "ultima_lista_tokens", None)
             if not tokens:
@@ -62,12 +68,26 @@ def tela_execucao(analisador):
                 console.print("[yellow]Nenhuma lista de tokens para exportar.[/yellow]")
                 input("ENTER para continuar...")
                 continue
-            path = Prompt.ask("Nome do arquivo de saída", default="saida_tokens.txt")
+
+            output_path = analisador.arquivo_saida
+            if not output_path:
+                path = Prompt.ask("Caminho do arquivo de saída (ex: output/tokens.txt)")
+                if not path:
+                    path = "output/tokens.txt"
+                    console.print("[yellow]Caminho de saída definido como padrão: output/tokens.txt[/yellow]")
+                    input("ENTER para continuar...")
+                project_root = Path(__file__).resolve().parent.parent.parent / "tests"
+                output_path = project_root / path
+                
+                analisador.arquivo_saida = output_path
+
             try:
-                with open(path, "w", encoding="utf-8") as f:
-                    for lex, pad in tokens:
-                        f.write(f"<{lex},{pad}>\n")
-                console.print(f"[green]Tokens exportados para {path}[/green]")
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+
+                with output_path.open("w", encoding="utf-8") as f:
+                    for token in tokens:
+                        f.write(f"{token[0]} -> {token[1]}\n")
+                console.print(f"[green]Tokens exportados para {output_path}[/green]")
             except Exception as e:
                 console.print(f"[red]Erro ao exportar: {e}[/red]")
             input("ENTER para continuar...")
