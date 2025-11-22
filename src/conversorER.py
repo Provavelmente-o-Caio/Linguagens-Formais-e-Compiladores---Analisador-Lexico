@@ -1,7 +1,7 @@
 from src.expressaoregular import NodoER, ExpressaoRegular
 from src.automatos import Automato, Estado
 
-EPSILON = "ε"
+EPSILON = "&"
 
 
 class ConversorER_AFD:
