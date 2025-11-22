@@ -8,8 +8,7 @@ class ConversorER_AFD:
     """
     Conversor de Expressão Regular para Autômato Finito Determinístico.
     
-    Referência: Aho et al., Seção 3.9.5 "Converting a Regular Expression Directly to a DFA",
-    Algoritmo 3.36, páginas 181-182.
+    Referência: Aho et al., Seção 3.9 "De uma Expressão Regular para um AFD".
     
     Implementa a construção direta de AFD a partir de ER, sem passar por AFND.
     """
@@ -18,7 +17,7 @@ class ConversorER_AFD:
         """Gera um AFD diretamente de uma expressão regular usando o algoritmo de construção direta.
         
         Passos:
-        1. Constrói árvore sintática aumentada (r).#
+        1. Constrói árvore da ER aumentada (r).#
         2. Calcula nullable, firstpos, lastpos para cada nodo
         3. Calcula followpos para cada posição
         4. Constrói estados: cada estado é um conjunto de posições

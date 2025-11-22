@@ -12,7 +12,7 @@ class AnalisadorLexico:
     Implementa um lexer completo que converte definições regulares em AFDs,
     unifica múltiplos AFDs e realiza análise léxica de código fonte.
     
-    Referência: Aho et al., Capítulo 3 "Lexical Analysis", páginas 109-194.
+    Referência: Aho et al., Capítulo 3 "Análise Léxica".
     """
     
     def __init__(self):

@@ -7,13 +7,12 @@ EPSILON = "&"
 
 @dataclass
 class NodoER:
-    """Nodo da árvore sintática de uma expressão regular.
+    """Nodo da árvore de uma expressão regular.
     
-    Representa um nodo interno (operador) ou folha (símbolo) da árvore.
-    Armazena informações para construção direta de AFD.
+    Representa um nodo interno (operador) ou folha (símbolo) da árvore da ER.
+    Armazena informações para construção direta de AFD (análise léxica).
     
-    Referência: Aho et al., Seção 3.9.4 "Computing nullable, firstpos, and lastpos",
-    Figura 3.60, páginas 179-180.
+    Referência: Aho et al., Seção 3.9 "De uma Expressão Regular para um AFD".
     
     Attributes:
         tipo: Tipo do nodo ("SIMBOLO", "|", ".", "*").
@@ -43,12 +42,12 @@ class NodoER:
 
     def calcula_posicoes(self) -> None:
         """
-        Calcula nullable, firstpos e lastpos para um nodo da árvore sintática.
+        Calcula nullable, firstpos e lastpos para um nodo da árvore da ER.
         
         As regras são:
         - Para folha (símbolo): nullable = false (exceto ε), firstpos = lastpos = {pos}
-        - Para união (|): nullable = c1.nullable OR c2.nullable
-        - Para concatenação (.): nullable = c1.nullable AND c2.nullable
+        - Para união (|): nullable = c1.nullable OU c2.nullable
+        - Para concatenação (.): nullable = c1.nullable E c2.nullable
         - Para fecho (*): nullable = true
         """
         if self.tipo == "SIMBOLO":
@@ -127,12 +126,11 @@ class NodoER:
 class ExpressaoRegular:
     """Processador de expressões regulares para construção direta de AFD.
     
-    Implementa parser descendente recursivo e cálculo de funções auxiliares
-    (nullable, firstpos, lastpos, followpos) necessárias para construção
-    direta de AFD sem passar por AFND.
+    Implementa análise de ERs com parser descendente recursivo e cálculo de funções
+    auxiliares (nullable, firstpos, lastpos, followpos) para construção
+    direta de AFD (analisador léxico) sem passar por AFND.
     
-    Referência: Aho et al., Seção 3.9 "From Regular Expressions to Automata",
-    páginas 159-186.
+    Referência: Aho et al., Seção 3.9 "De Expressões Regulares para Autômatos".
     """
     
     def __init__(self, expressao: str) -> None:
@@ -152,7 +150,7 @@ class ExpressaoRegular:
         """
         Insere concatenação explícita (.) onde necessário.
         
-        A concatenação explícita facilita o parsing e construção da árvore sintática.
+        A concatenação explícita facilita o parsing e construção da árvore da ER.
         """
         resultado: list[str] = []
         anterior: str | None = None
@@ -172,11 +170,11 @@ class ExpressaoRegular:
         """
         Parser descendente recursivo para expressões regulares.
         
-        Implementa análise sintática top-down para gramática de ERs:
-        E → C ('|' C)*
-        C → K ('.' K)*  
-        K → A ('*'|'+'|'?')*
-        A → símbolo | '(' E ')'
+        Analisa a estrutura da ER seguindo precedência de operadores:
+        E → C ('|' C)*        (união - menor precedência)
+        C → K ('.' K)*        (concatenação)
+        K → A ('*'|'+'|'?')*  (operadores unários)
+        A → símbolo | '(' E ')'  (átomos - maior precedência)
         """
         nodo: NodoER = self.parse_concatenacao()
         while self.olhar() == "|":
@@ -193,7 +191,7 @@ class ExpressaoRegular:
     def parse_concatenacao(self) -> NodoER:
         """Parseia concatenação de expressões.
         
-        Regra gramatical: C → K ('.' K)*
+        Estrutura: C → K ('.' K)*
         
         Returns:
             Nodo representando concatenação de subexpressões.
@@ -207,7 +205,7 @@ class ExpressaoRegular:
     def parse_kleene(self) -> NodoER:
         """Parseia operadores de Kleene (*, +, ?).
         
-        Regra gramatical: K → A ('*'|'+'|'?')*
+        Estrutura: K → A ('*'|'+'|'?')*
         Expansões:
         - a* → fecho de Kleene
         - a+ → a.a* (uma ou mais ocorrências)
@@ -241,7 +239,7 @@ class ExpressaoRegular:
     def parse_atomico(self) -> NodoER:
         """Parseia expressões atômicas (símbolos ou subexpressões entre parênteses).
         
-        Regra gramatical: A → símbolo | '(' E ')'
+        Estrutura: A → símbolo | '(' E ')'
         
         Returns:
             Nodo representando símbolo individual ou subexpressão.
@@ -369,10 +367,10 @@ class ExpressaoRegular:
 
     def processar(self) -> NodoER:
         """
-        Calcula a árvore para uma expressão regular, retornando a raiz desta.
+        Processa a expressão regular e retorna a raiz da árvore construída.
         
         Passos:
-        1. Constrói árvore sintática aumentada (adiciona # no final)
+        1. Constrói árvore da ER aumentada (adiciona # no final)
         2. Calcula nullable, firstpos, lastpos para cada nodo
         3. Calcula followpos para cada posição
         """
