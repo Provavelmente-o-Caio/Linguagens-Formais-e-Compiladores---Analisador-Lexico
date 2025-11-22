@@ -6,12 +6,14 @@ a partir de gramáticas livres de contexto.
 Referência: Aho et al., Seção 4.6 "Introduction to LR Parsing: Simple LR".
 """
 
-from typing import List, Set
+from typing import List, Set, Union
 from src.gramaticas import (
     Terminal,
     NaoTerminal,
     Producao,
-    Epsilon,
+    EPSILON,
+    Gramatica,
+    HandlerGramatica,
 )
 
 
@@ -28,13 +30,11 @@ class AnalisadorSintatico:
     def __init__(self):
         """Inicializa o analisador sintático com estruturas vazias.
         
-        Inicializa gramática, conjunto de símbolos, produções e estruturas
-        para construção das tabelas de parsing.
+        O analisador usa um objeto Gramatica para encapsular todos os
+        componentes da gramática (produções, símbolos, etc.).
         """
-        self.producoes: List[Producao] = []
-        self.nao_terminais: Set[NaoTerminal] = set()
-        self.terminais: Set[Terminal] = set()
-        self.simbolo_inicial: NaoTerminal | None = None
+        self.gramatica: Gramatica | None = None
+        self._handler: HandlerGramatica | None = None
 
     def ler_gramatica(self, arquivo: str):
         """Lê gramática livre de contexto de um arquivo.
@@ -51,6 +51,11 @@ class AnalisadorSintatico:
         Raises:
             ValueError: Se encontrar linha com formato inválido.
         """
+        # Variáveis locais para construir gramática
+        producoes: List[Producao] = []
+        nao_terminais: Set[NaoTerminal] = set()
+        terminais: Set[Terminal] = set()
+        simbolo_inicial: NaoTerminal | None = None
         numero_producao = 0
         
         with open(arquivo, "r") as f:
@@ -90,15 +95,15 @@ class AnalisadorSintatico:
                 
                 # Criar símbolo não-terminal da cabeça
                 cabeca = NaoTerminal(cabeca_str)
-                self.nao_terminais.add(cabeca)
+                nao_terminais.add(cabeca)
                 
                 # Definir símbolo inicial (primeira produção)
-                if self.simbolo_inicial is None:
-                    self.simbolo_inicial = cabeca
+                if simbolo_inicial is None:
+                    simbolo_inicial = cabeca
                 
                 # Parsear corpo da produção
                 try:
-                    corpo = self._parsear_corpo(corpo_str)
+                    corpo = self._parsear_corpo(corpo_str, terminais, nao_terminais)
                 except ValueError as e:
                     raise ValueError(
                         f"Erro na produção {numero_producao}: [{cabeca_str} ::= {corpo_str}], {e}"
@@ -106,15 +111,23 @@ class AnalisadorSintatico:
                 
                 # Criar e armazenar produção
                 producao = Producao(cabeca, corpo, numero_producao)
-                self.producoes.append(producao)
+                producoes.append(producao)
                 numero_producao += 1
                 
                 print(f"Produção {producao.numero}: {producao}")
         
-        print(f"\nTotal: {len(self.producoes)} produções carregadas")
-        print(f"Símbolo inicial: {self.simbolo_inicial}")
-        print(f"Não-terminais: {sorted([str(nt) for nt in self.nao_terminais])}")
-        print(f"Terminais: {sorted([str(t) for t in self.terminais])}")
+        print(f"\nTotal: {len(producoes)} produções carregadas")
+        print(f"Símbolo inicial: {simbolo_inicial}")
+        print(f"Não-terminais: {sorted([str(nt) for nt in nao_terminais])}")
+        print(f"Terminais: {sorted([str(t) for t in terminais])}")
+        
+        # Criar objeto Gramatica
+        self.gramatica = Gramatica(
+            producoes,
+            terminais,
+            nao_terminais,
+            simbolo_inicial,
+        )
     
     def _limpar_simbolo(self, simbolo_str: str) -> str:
         """Remove delimitadores < > de um símbolo.
@@ -130,7 +143,12 @@ class AnalisadorSintatico:
             simbolo_str = simbolo_str[1:-1].strip()
         return simbolo_str
     
-    def _parsear_corpo(self, corpo_str: str) -> List[Terminal | NaoTerminal]:
+    def _parsear_corpo(
+        self, 
+        corpo_str: str,
+        terminais: Set[Terminal],
+        nao_terminais: Set[NaoTerminal],
+    ) -> List[Terminal | NaoTerminal]:
         """Parseia o corpo de uma produção extraindo símbolos.
         
         Identifica terminais (sem < >) e não-terminais (com < >).
@@ -138,6 +156,8 @@ class AnalisadorSintatico:
         
         Args:
             corpo_str: String contendo o corpo da produção.
+            terminais: Conjunto para adicionar terminais encontrados.
+            nao_terminais: Conjunto para adicionar não-terminais encontrados.
             
         Returns:
             Lista de símbolos (Simbolo) representando o corpo.
@@ -145,7 +165,7 @@ class AnalisadorSintatico:
         corpo_str = corpo_str.strip()
         
         # Produção vazia (epsilon)
-        if corpo_str == Epsilon():
+        if corpo_str == EPSILON:
             return []
 
         simbolos = []
@@ -166,7 +186,7 @@ class AnalisadorSintatico:
                     )
                 nome = corpo_str[i+1:fim].strip()
                 simbolo = NaoTerminal(nome)
-                self.nao_terminais.add(simbolo)
+                nao_terminais.add(simbolo)
                 simbolos.append(simbolo)
                 i = fim + 1
             else:
@@ -179,13 +199,31 @@ class AnalisadorSintatico:
                 nome = corpo_str[i:fim].strip()
                 if nome:  # Evitar strings vazias
                     simbolo = Terminal(nome)
-                    self.terminais.add(simbolo)
+                    terminais.add(simbolo)
                     simbolos.append(simbolo)
                 i = fim
         
         if simbolos == []:
             raise ValueError(
-                f"Use epsilon {Epsilon()} para representar produção vazia"
+                f"Use epsilon {EPSILON} para representar produção vazia"
             )
 
         return simbolos
+    
+    def _obter_handler(self) -> HandlerGramatica:
+        """Obtém ou cria handler de gramática para cálculos.
+        
+        Returns:
+            Handler de gramática inicializado.
+            
+        Raises:
+            ValueError: Se a gramática não foi carregada.
+        """
+        if self.gramatica is None:
+            raise ValueError("Gramática não foi carregada. Use ler_gramatica() primeiro.")
+        
+        if self._handler is None:
+            self._handler = HandlerGramatica(self.gramatica)
+        
+        return self._handler
+
