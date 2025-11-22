@@ -58,7 +58,7 @@ class Epsilon(Terminal):
         return "ε"
 
 
-@dataclass
+@dataclass(frozen=True)
 class Producao:
     """Representa uma produção da gramática livre de contexto.
     
@@ -66,11 +66,11 @@ class Producao:
     
     Attributes:
         cabeca: Não-terminal do lado esquerdo da produção.
-        corpo: Lista de símbolos do lado direito da produção.
+        corpo: Tupla de símbolos do lado direito da produção.
         numero: Número identificador único da produção.
     """
     cabeca: NaoTerminal
-    corpo: List[Union[Terminal, NaoTerminal]]
+    corpo: tuple[Union[Terminal, NaoTerminal], ...]
     numero: int
     
     def __repr__(self) -> str:
@@ -86,7 +86,7 @@ class Gramatica:
     - Símbolos terminais e não-terminais
     - Símbolo inicial
     
-    Referência: Aho et al., Seção 4.1 "Context-Free Grammars".
+    Referência: Aho et al., Seção 4.1 "Gramáticas Livres do Contexto".
     
     Attributes:
         producoes: Lista de produções da gramática.
@@ -114,7 +114,7 @@ class Gramatica:
         self.terminais = terminais
         self.nao_terminais = nao_terminais
         self.simbolo_inicial = simbolo_inicial
-    
+
     def obter_producoes(self, nao_terminal: NaoTerminal) -> List[Producao]:
         """Obtém todas as produções com determinado não-terminal na cabeça.
         

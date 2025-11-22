@@ -1,11 +1,3 @@
-"""Analisador sintático SLR.
-
-Implementa gerador de analisadores sintáticos do tipo SLR (Simple LR)
-a partir de gramáticas livres de contexto.
-
-Referência: Aho et al., Seção 4.6 "Introduction to LR Parsing: Simple LR".
-"""
-
 from typing import List, Set, Union
 from src.gramaticas import (
     Terminal,
@@ -24,7 +16,7 @@ class AnalisadorSintatico:
     gramáticas livres de contexto. Constrói tabelas ACTION e GOTO para
     parsing bottom-up.
     
-    Referência: Aho et al., Seção 4.6 "Introduction to LR Parsing: Simple LR".
+    Referência: Aho et al., Seção 4.7 "Analisadores Sintáticos LR".
     """
     
     def __init__(self):
@@ -110,7 +102,7 @@ class AnalisadorSintatico:
                     )
                 
                 # Criar e armazenar produção
-                producao = Producao(cabeca, corpo, numero_producao)
+                producao = Producao(cabeca, tuple(corpo), numero_producao)
                 producoes.append(producao)
                 numero_producao += 1
                 

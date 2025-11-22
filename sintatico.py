@@ -1,7 +1,6 @@
-
 import sys
 from src.analisador_sintatico import AnalisadorSintatico
-from src.gramaticas import NaoTerminal
+from src.analisadorSLR import AnalisadorSLR
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -25,3 +24,7 @@ if __name__ == "__main__":
         follow = handler.get_follow(nt)
         follow_str = ", ".join(sorted([str(s) for s in follow]))
         print(f"FOLLOW({nt}) = {{ {follow_str} }}")
+    
+    slr = AnalisadorSLR(analisador.gramatica, handler)
+    slr.construir_colecao_canonica()
+    slr.imprimir_colecao_canonica()
