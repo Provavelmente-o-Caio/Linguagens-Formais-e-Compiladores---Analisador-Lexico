@@ -1,8 +1,3 @@
-"""Item LR(0) para análise sintática SLR.
-
-Referência: Dragon Book, Seção 4.7 "Analisadores Sintáticos LR".
-"""
-
 from dataclasses import dataclass
 from typing import Union
 from src.gramaticas import Producao, Terminal, NaoTerminal

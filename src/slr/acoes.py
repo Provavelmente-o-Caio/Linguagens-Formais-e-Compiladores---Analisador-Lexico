@@ -1,8 +1,3 @@
-"""Ações do parser SLR.
-
-Referência: Dragon Book, Seção 4.7 "Analisadores Sintáticos LR".
-"""
-
 from dataclasses import dataclass
 from typing import Union
 
@@ -47,10 +42,7 @@ Acao = Union[Shift, Reduce, Accept]
 
 
 class ConflitoError(Exception):
-    """Exceção lançada quando há conflito shift-reduce ou reduce-reduce na tabela SLR.
-    
-    Referência: Dragon Book, Seção 4.7 - Gramáticas que não são SLR podem ter conflitos.
-    """
+    """Exceção lançada quando há conflito shift-reduce ou reduce-reduce na tabela SLR."""
     def __init__(self, estado: int, simbolo, acao_anterior: str, nova_acao: str):
         self.estado = estado
         self.simbolo = simbolo

@@ -1,8 +1,3 @@
-"""Tabela de parsing SLR.
-
-Referência: Dragon Book, Seção 4.7 "Analisadores Sintáticos LR".
-"""
-
 from typing import Dict, List, FrozenSet, Tuple
 from src.gramaticas import Terminal, NaoTerminal, Producao, HandlerGramatica
 from .acoes import Acao, Shift, Reduce, Accept, ConflitoError
@@ -12,7 +7,7 @@ from .item_lr import ItemLR
 class TabelaSLR:
     """Tabela de parsing SLR contendo ACTION e GOTO.
     
-    Referência: Aho et al., Seção 4.7 "Analisadores Sintáticos LR".
+    Referência: Aho et al., Seção 4.7
     """
     
     def __init__(self):

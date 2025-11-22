@@ -1,8 +1,3 @@
-"""Analisador sintático SLR(1).
-
-Referência: Dragon Book, Seção 4.7 "Analisadores Sintáticos LR".
-"""
-
 from typing import Set, Dict, List, FrozenSet, Tuple, Optional, Union
 from src.gramaticas import (
     Gramatica,

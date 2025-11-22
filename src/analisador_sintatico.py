@@ -1,4 +1,4 @@
-from typing import List, Set, Union
+from typing import List, Set
 from src.gramaticas import (
     Terminal,
     NaoTerminal,
@@ -16,7 +16,7 @@ class AnalisadorSintatico:
     gramáticas livres de contexto. Constrói tabelas ACTION e GOTO para
     parsing bottom-up.
     
-    Referência: Aho et al., Seção 4.7 "Analisadores Sintáticos LR".
+    Referência: Aho et al., Seção 4.7
     """
     
     def __init__(self):
