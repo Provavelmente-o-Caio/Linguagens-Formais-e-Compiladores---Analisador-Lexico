@@ -1,12 +1,5 @@
-"""Conversor SLR para geração de parsers SLR(1).
-
-Implementa a construção de itens LR(0) canônicos e tabelas de parsing SLR.
-
-Referência: Aho et al., Seção 4.6 "Introduction to LR Parsing: Simple LR".
-"""
-
 from dataclasses import dataclass
-from typing import Set, Dict, List, FrozenSet, Tuple
+from typing import Set, Dict, List, FrozenSet, Tuple, Optional, Union
 from src.gramaticas import (
     Gramatica,
     HandlerGramatica,
@@ -15,6 +8,45 @@ from src.gramaticas import (
     Producao,
     Epsilon,
 )
+
+
+@dataclass(frozen=True)
+class Shift:
+    """Ação shift: empilha estado e avança para próximo símbolo.
+    
+    ACTION[i, a] = shift j
+    """
+    estado: int
+    
+    def __str__(self) -> str:
+        return f"s{self.estado}"
+
+
+@dataclass(frozen=True)
+class Reduce:
+    """Ação reduce: reduz usando uma produção da gramática.
+    
+    ACTION[i, a] = reduce A::=β
+    """
+    producao: int  # Número da produção
+    
+    def __str__(self) -> str:
+        return f"r{self.producao}"
+
+
+@dataclass(frozen=True)
+class Accept:
+    """Ação accept: aceita a entrada.
+    
+    ACTION[i, $] = accept
+    """
+    
+    def __str__(self) -> str:
+        return "acc"
+
+
+# Tipo união para todas as ações possíveis
+Acao = Union[Shift, Reduce, Accept]
 
 
 @dataclass(frozen=True)
@@ -63,6 +95,116 @@ class ItemLR:
         return ItemLR(self.producao, self.posicao + 1)
 
 
+class ConflitoError(Exception):
+    """Exceção lançada quando há conflito shift-reduce ou reduce-reduce na tabela SLR.
+    
+    Referência: Dragon Book, Seção 4.7 - Gramáticas que não são SLR podem ter conflitos.
+    """
+    def __init__(self, estado: int, simbolo, acao_anterior: str, nova_acao: str):
+        self.estado = estado
+        self.simbolo = simbolo
+        self.acao_anterior = acao_anterior
+        self.nova_acao = nova_acao
+        mensagem = f"CONFLITO em ACTION[{estado}, {simbolo}]: {acao_anterior} vs {nova_acao}"
+        super().__init__(mensagem)
+
+
+class TabelaSLR:
+    """Tabela de parsing SLR contendo ACTION e GOTO.
+    
+    Referência: Aho et al., Seção 4.7 "Analisadores Sintáticos LR".
+    """
+    
+    def __init__(self):
+        """Inicializa tabelas vazias."""
+        # ACTION[estado, terminal] -> ação (Shift, Reduce ou Accept)
+        self.action: Dict[Tuple[int, Terminal], Acao] = {}
+        # GOTO[estado, não-terminal] -> estado
+        self.goto: Dict[Tuple[int, NaoTerminal], int] = {}
+        # Lista de conflitos encontrados
+        self.conflitos: List[ConflitoError] = []
+
+    def construir(
+        self,
+        colecao_canonica: List[FrozenSet[ItemLR]],
+        ordem_itens: Dict[FrozenSet[ItemLR], List[ItemLR]],
+        transicoes: Dict[str, int],
+        producao_inicial: Producao,
+        handler: HandlerGramatica
+    ):
+        """Constrói as tabelas ACTION e GOTO para o parser SLR.
+        
+        Algoritmo de construção da tabela SLR
+        Para cada estado I_i:
+        1. Se [A ::= α·aβ] ∈ I_i e goto(I_i, a) = I_j, então ACTION[i,a] = shift j
+        2. Se [A ::= α·] ∈ I_i, então ACTION[i,a] = reduce A::=α para todo a ∈ FOLLOW(A)
+           (A ≠ S')
+        3. Se [S' ::= S·] ∈ I_i, então ACTION[i,$] = accept
+        4. Se goto(I_i, A) = I_j, então GOTO[i,A] = j
+        
+        Args:
+            colecao_canonica: Lista de conjuntos de itens LR(0)
+            ordem_itens: Mapa preservando ordem de inserção dos itens
+            transicoes: Dicionário de transições entre estados
+            producao_inicial: Produção aumentada S' ::= S
+            handler: Handler para cálculos de FOLLOW
+        """
+        # Terminal de fim de entrada
+        fim_entrada = Terminal("$")
+        
+        for i, conjunto in enumerate(colecao_canonica):
+            itens_ordenados = ordem_itens.get(conjunto, list(conjunto))
+            
+            for item in itens_ordenados:
+                simbolo = item.simbolo_apos_ponto()
+                
+                # Regra 1: Se [A ::= α·aβ] e a é terminal
+                if simbolo is not None and isinstance(simbolo, Terminal):
+                    # Procurar transição goto(I_i, a)
+                    chave_trans = (i, simbolo)
+                    if chave_trans in transicoes:
+                        j = transicoes[chave_trans]
+                        nova_acao = Shift(j)
+                        # Verificar conflito
+                        acao_anterior = self.action.get((i, simbolo))
+                        if acao_anterior and acao_anterior != nova_acao:
+                            raise ConflitoError(i, simbolo, str(acao_anterior), str(nova_acao))
+                        self.action[(i, simbolo)] = nova_acao
+                
+                # Regra 2 e 3: Se [A ::= α·] (item completo)
+                elif item.esta_completo():
+                    # Regra 3: Aceitar se for S' ::= S·
+                    if item.producao == producao_inicial:
+                        self.action[(i, fim_entrada)] = Accept()
+                    # Regra 2: Reduce para FOLLOW(A)
+                    else:
+                        producao = item.producao
+                        follow_a = handler.get_follow(producao.cabeca)
+                        
+                        for terminal in follow_a:
+                            nova_acao = Reduce(producao.numero)
+                            # Verificar conflito
+                            acao_anterior = self.action.get((i, terminal))
+                            if acao_anterior and acao_anterior != nova_acao:
+                                raise ConflitoError(i, terminal, str(acao_anterior), str(nova_acao))
+                            self.action[(i, terminal)] = nova_acao
+            
+            # Regra 4: Preencher GOTO para não-terminais
+            itens_ordenados = ordem_itens.get(conjunto, list(conjunto))
+            simbolos_goto = []
+            for item in itens_ordenados:
+                simbolo = item.simbolo_apos_ponto()
+                if simbolo is not None and isinstance(simbolo, NaoTerminal):
+                    if simbolo not in simbolos_goto:
+                        simbolos_goto.append(simbolo)
+            
+            for nt in simbolos_goto:
+                chave_trans = (i, nt)
+                if chave_trans in transicoes:
+                    j = transicoes[chave_trans]
+                    self.goto[(i, nt)] = j
+
+
 class AnalisadorSLR:
     """Analisador SLR(1).
     
@@ -90,7 +232,10 @@ class AnalisadorSLR:
         self.transicoes: Dict[Tuple[int, Terminal | NaoTerminal], int] = {}
         # Mapa para preservar ordem de inserção dos itens (para impressão)
         self.ordem_itens: Dict[FrozenSet[ItemLR], List[ItemLR]] = {}
-    
+        
+        # Tabela de parsing SLR
+        self.tabela: Optional[TabelaSLR] = None
+
     def estender_gramatica(self):
         self.simbolo_inicial_aumentado = NaoTerminal(f"{self.gramatica.simbolo_inicial.nome}'")
         self.producao_inicial = Producao(
@@ -234,9 +379,36 @@ class AnalisadorSLR:
                     idx_destino = indice_conjuntos[goto_conjunto]
                 
                 # Armazenar transição
-                self.transicoes[f"{idx},{simbolo}"] = idx_destino
+                self.transicoes[(idx, simbolo)] = idx_destino
         
         return self.colecao_canonica
+    
+    def construir_tabela(self) -> TabelaSLR:
+        """Constrói as tabelas ACTION e GOTO para o parser SLR.
+        
+        Delega a construção para a classe TabelaSLR.
+        Se houver conflitos, imprime as mensagens mas continua a construção.
+        
+        Returns:
+            TabelaSLR construída
+        """
+        if not self.colecao_canonica:
+            self.construir_colecao_canonica()
+        
+        self.tabela = TabelaSLR()
+        try:
+            self.tabela.construir(
+                self.colecao_canonica,
+                self.ordem_itens,
+                self.transicoes,
+                self.producao_inicial,
+                self.handler
+            )
+        except ConflitoError as e:
+            # Imprimir mensagem de conflito e continuar
+            print(str(e))
+        
+        return self.tabela
     
     def imprimir_colecao_canonica(self):
         """Imprime a coleção canônica de forma legível."""
@@ -254,11 +426,6 @@ class AnalisadorSLR:
             print()
         
         print("\n=== TRANSIÇÕES ===\n")
-        # Ordenar transições por número de estado de origem
-        transicoes_ordenadas = sorted(
-            self.transicoes.items(),
-            key=lambda x: int(x[0].split(",")[0])
-        )
-        for origem, destino in transicoes_ordenadas:
-            estado, simbolo = origem.split(",", 1)
+        for origem, destino in self.transicoes.items():
+            estado, simbolo = origem
             print(f"I{estado} --{simbolo}--> I{destino}")
