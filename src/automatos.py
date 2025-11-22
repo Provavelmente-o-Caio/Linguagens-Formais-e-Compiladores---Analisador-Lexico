@@ -572,15 +572,9 @@ class HandlerAutomatos:
         automato = self.remove_estados_equivalentes(automato)
         return automato
 
-    def print_tabela(self, automato: Automato) -> None:
-        """Imprime a tabela de transições do autômato formatada.
-        
-        Formato: Estado | símbolo1 | símbolo2 | ...
-        Marcadores: → = estado inicial, * = estado final, - = sem transição
-        
-        Args:
-            automato: Autômato a ser exibido.
-        """
+    # Essa função não é mais usada, já que é feito uma tabela direto na CLI com rich (remover?)
+    def print_tabela(self, automato: Automato):
+        # Ordenar estados e símbolos para apresentação consistente
         estados_ord = sorted(automato.estados, key=lambda e: e.nome)
         simbolos_ord = sorted(automato.simbolos)
 

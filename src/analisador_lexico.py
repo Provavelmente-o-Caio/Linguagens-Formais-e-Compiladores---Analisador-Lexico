@@ -1,6 +1,6 @@
 import re
-
 import time
+
 from src.automatos import Automato, Estado, HandlerAutomatos
 from src.conversorER import ConversorER_AFD
 from src.expressaoregular import ExpressaoRegular
@@ -26,6 +26,9 @@ class AnalisadorLexico:
         self.definicoes: dict[str, str] = {}
         self.automato_unificado: Automato | None = None
         self.mapa_estados_padroes: dict[Estado, str] = {}
+        self.entrada_texto: list[str] = []
+        self.arquivo_saida: str | None = None
+        self.ultima_lista_tokens: list[tuple[str, str]] = []
 
     def ler_grupos(self, expressao: str) -> str:
         """
@@ -299,25 +302,18 @@ class AnalisadorLexico:
             Lista de tuplas (lexema, padrão) ou (lexema, "erro!") para tokens inválidos.
         """
         tokens: list[tuple[str, str]] = []
-        with open(arquivo, "r") as f:
-            for num_linha, linha in enumerate(f, 1):
-                linha = linha.strip()
+        for num_linha, linha in enumerate(self.entrada_texto, 1):
+            linha = linha.strip()
 
-                if linha.startswith("#") or not linha:
-                    continue
+            if linha.startswith("#") or not linha:
+                continue
 
-                palavras = linha.split()
+            palavras = linha.split()
 
-                for palavra in palavras:
-                    token = self.tokenizar(palavra)
-                    tokens.append(token)
-                    print(f"<{token[0]}, {token[1]}>")
-
-        if arquivo_saida:
-            with open(arquivo_saida, "w") as f:
-                for token in tokens:
-                    f.write(f"{token[0]} -> {token[1]}\n")
-            print(f"Tokens salvos em {arquivo_saida}")
+            for palavra in palavras:
+                token = self.tokenizar(palavra)
+                tokens.append(token)
+                print(f"<{token[0]}, {token[1]}>")
 
         return tokens
 
