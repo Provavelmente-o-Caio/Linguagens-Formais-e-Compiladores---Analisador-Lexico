@@ -6,6 +6,7 @@ EPSILON = "&"
 
 @dataclass(frozen=True)
 class Estado:
+    """Representa um estado de autômato finito."""
     nome: str
 
     @override
@@ -18,6 +19,7 @@ class Estado:
 
 
 class Automato:
+    """Autômato finito (determinístico ou não-determinístico) com suporte a ε-transições."""
     def __init__(
         self,
         estados: set[Estado],
@@ -58,9 +60,22 @@ class Automato:
             self.estados_finais = set()
 
     def adicionar_estados(self, estados_novos: set[Estado]) -> None:
+        """Adiciona novos estados ao autômato.
+        
+        Args:
+            estados_novos: Conjunto de estados a serem adicionados.
+        """
         self.estados.update(estados_novos)
 
     def adicionar_estados_finais(self, estados_finais_novos: set[Estado]) -> None:
+        """Adiciona estados finais ao autômato.
+        
+        Args:
+            estados_finais_novos: Conjunto de estados finais a serem adicionados.
+            
+        Raises:
+            ValueError: Se algum estado não existir no autômato.
+        """
         if not estados_finais_novos.issubset(self.estados):
             raise ValueError("Algum dos estados finais é desconhecido")
 
@@ -69,6 +84,11 @@ class Automato:
     def adicionar_transicoes(
         self, transicoes: dict[tuple[Estado, str], set[Estado]]
     ) -> None:
+        """Adiciona transições ao autômato.
+        
+        Args:
+            transicoes: Dicionário mapeando (estado, símbolo) para conjunto de estados destino.
+        """
         self.transicoes.update(transicoes)
 
         for (_, simbolo), _ in transicoes.items():
@@ -76,16 +96,29 @@ class Automato:
                 self.simbolos.add(simbolo)
 
     def transiciona(self, estados_atuais: set[Estado], simbolo: str) -> set[Estado]:
+        """Retorna os estados alcançados a partir de um conjunto de estados via um símbolo.
+        
+        Args:
+            estados_atuais: Conjunto de estados de origem.
+            simbolo: Símbolo da transição.
+            
+        Returns:
+            Conjunto de estados destino alcançados.
         """
-        Retorna os estados que um dado conjunto de etados alcança
-        """
-        # recebe set de estados para lidar com o não-determinismo
         novos_estados: set[Estado] = set()
         for e in estados_atuais:
             novos_estados.update(self.transicoes.get((e, simbolo), set()))
         return novos_estados
 
     def processar(self, palavra: str) -> bool:
+        """Simula o autômato para reconhecer uma palavra.
+        
+        Args:
+            palavra: String a ser reconhecida.
+            
+        Returns:
+            True se a palavra é aceita pelo autômato, False caso contrário.
+        """
         estados_atuais = self.epsilon_fecho({self.estado_inicial})
         for simbolo in palavra:
             estados_atuais = self.epsilon_fecho(
@@ -96,10 +129,15 @@ class Automato:
     def alcanca(
         self, estados_atuais: set[Estado], estados_destino: set[Estado]
     ) -> bool:
+        """Verifica se existe caminho entre estados de origem e estados destino.
+        
+        Args:
+            estados_atuais: Conjunto de estados de origem.
+            estados_destino: Conjunto de estados destino.
+            
+        Returns:
+            True se algum estado de origem alcança algum estado destino.
         """
-        Retorna se algum dos estados de entrada atinge algum dos estados destino
-        """
-
         processados: set[Estado] = set()
         processando: list[Estado] = list(estados_atuais)
 
@@ -124,12 +162,25 @@ class Automato:
         return False
 
     def is_deterministico(self) -> bool:
+        """Verifica se o autômato é determinístico.
+        
+        Returns:
+            True se o autômato é determinístico (sem ε-transições e sem múltiplos destinos).
+        """
         for (_, simbolo), destinos in self.transicoes.items():
             if len(destinos) > 1 or simbolo == EPSILON:
                 return False
         return True
 
     def epsilon_fecho(self, estados: set[Estado]) -> set[Estado]:
+        """Calcula o ε-fecho (epsilon-closure) de um conjunto de estados.
+        
+        Args:
+            estados: Conjunto de estados inicial.
+            
+        Returns:
+            Conjunto de todos os estados alcançáveis usando apenas ε-transições.
+        """
         estados_alcancaveis = set(estados)
         estados_a_processar = list(estados)
         while estados_a_processar:
@@ -142,7 +193,17 @@ class Automato:
 
 
 class HandlerAutomatos:
+    """Classe com operações sobre autômatos finitos: união, determinização e minimização."""
     def uniao(self, automato1: Automato, automato2: Automato) -> Automato:
+        """Cria a união de dois autômatos usando ε-transição.
+        
+        Args:
+            automato1: Primeiro autômato.
+            automato2: Segundo autômato.
+            
+        Returns:
+            Novo autômato que reconhece a união das linguagens.
+        """
         nomes_existentes = {e.nome for e in automato1.estados | automato2.estados}
         i = 0
         while f"q_uniao_{i}" in nomes_existentes:
@@ -170,10 +231,26 @@ class HandlerAutomatos:
 
         return automato_uniao
 
-    def junta_nome_estados(self, estados: set[Estado]):
+    def junta_nome_estados(self, estados: set[Estado]) -> str:
+        """Concatena nomes de estados em ordem alfabética.
+        
+        Args:
+            estados: Conjunto de estados.
+            
+        Returns:
+            String com nomes concatenados.
+        """
         return "".join(sorted(e.nome for e in estados))
 
     def determinizar(self, automato: Automato) -> Automato:
+        """Converte um AFND em AFD usando construção de subconjuntos.
+        
+        Args:
+            automato: Autômato finito não-determinístico.
+            
+        Returns:
+            Autômato finito determinístico equivalente.
+        """
         if automato.is_deterministico():
             return automato
 
@@ -305,7 +382,14 @@ class HandlerAutomatos:
         return automato_determinizado, mapeamento
 
     def remove_estados_inalcancaveis(self, automato: Automato) -> Automato:
-        # utilizando a função transiciona preciso remover os estados que nunca alcanço a partir de nenhuma transição
+        """Remove estados inalcançáveis a partir do estado inicial.
+        
+        Args:
+            automato: Autômato a ser processado.
+            
+        Returns:
+            Novo autômato contendo apenas estados alcançáveis.
+        """
         alcancados: set[Estado] = {automato.estado_inicial}
         processados: set[Estado] = set()
         processando: list[Estado] = [automato.estado_inicial]
@@ -338,6 +422,14 @@ class HandlerAutomatos:
         return automato_alcancavel
 
     def remove_estados_mortos(self, automato: Automato) -> Automato:
+        """Remove estados mortos (que não alcançam estados finais).
+        
+        Args:
+            automato: Autômato a ser processado.
+            
+        Returns:
+            Novo autômato contendo apenas estados vivos.
+        """
         estados_vivos: set[Estado] = set()
 
         for estado in automato.estados:
@@ -364,6 +456,14 @@ class HandlerAutomatos:
         return automato_vivo
 
     def remove_estados_equivalentes(self, automato: Automato) -> Automato:
+        """Remove estados equivalentes usando particionamento iterativo.
+        
+        Args:
+            automato: Autômato determinístico.
+            
+        Returns:
+            Novo autômato com estados equivalentes mesclados.
+        """
         if not automato.is_deterministico():
             automato = self.determinizar(automato)
 
@@ -452,6 +552,20 @@ class HandlerAutomatos:
         )
 
     def minimizar(self, automato: Automato) -> Automato:
+        """Minimiza o autômato finito determinístico.
+        
+        Aplica em sequência:
+        1. Determinização
+        2. Remoção de estados inalcançáveis
+        3. Remoção de estados mortos
+        4. Remoção de estados equivalentes
+        
+        Args:
+            automato: Autômato a ser minimizado.
+            
+        Returns:
+            Autômato determinístico mínimo equivalente.
+        """
         automato = self.determinizar(automato)
         automato = self.remove_estados_inalcancaveis(automato)
         automato = self.remove_estados_mortos(automato)
