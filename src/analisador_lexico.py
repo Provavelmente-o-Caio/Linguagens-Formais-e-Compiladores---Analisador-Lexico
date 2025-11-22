@@ -1,5 +1,6 @@
 import re
 
+import time
 from src.automatos import Automato, Estado, HandlerAutomatos
 from src.conversorER import ConversorER_AFD
 from src.expressaoregular import ExpressaoRegular
@@ -18,7 +19,7 @@ class AnalisadorLexico:
         Lê expresoes que foram entradas no formato de grupos, como [a-z], [A-Z], [a-zA-Z], [0-9]
         """
         resultado: str = expressao
-        padrao = r'\[([^\]]+)\]'
+        padrao = r"\[([^\]]+)\]"
 
         resultado = re.sub(padrao, self.expandir_match, resultado)
 
@@ -40,7 +41,7 @@ class AnalisadorLexico:
 
         while i < len(conteudo):
             # Verifica se é um range (x-y)
-            if i + 2 < len(conteudo) and conteudo[i + 1] == '-':
+            if i + 2 < len(conteudo) and conteudo[i + 1] == "-":
                 inicio = conteudo[i]
                 fim = conteudo[i + 2]
 
@@ -74,21 +75,18 @@ class AnalisadorLexico:
 
         if not inicio_letra and not inicio_digito:
             raise ValueError(
-                f"Range inválido: '{inicio}-{fim}' "
-                f"('{inicio}' não é letra nem dígito)"
+                f"Range inválido: '{inicio}-{fim}' ('{inicio}' não é letra nem dígito)"
             )
 
         if not fim_letra and not fim_digito:
             raise ValueError(
-                f"Range inválido: '{inicio}-{fim}' "
-                f"('{fim}' não é letra nem dígito)"
+                f"Range inválido: '{inicio}-{fim}' ('{fim}' não é letra nem dígito)"
             )
 
         # Validar ordem
         if ord(inicio) > ord(fim):
             raise ValueError(
-                f"Range inválido: '{inicio}-{fim}' "
-                f"('{inicio}' vem depois de '{fim}')"
+                f"Range inválido: '{inicio}-{fim}' ('{inicio}' vem depois de '{fim}')"
             )
 
         return [chr(i) for i in range(ord(inicio), ord(fim) + 1)]
@@ -134,22 +132,35 @@ class AnalisadorLexico:
         if not self.definicoes:
             raise ValueError("Nenhuma definição foi adicionada")
 
-        afds_minimizados = []
+        afds_minimizados: list[Automato] = []
 
-        for nome, expressao in self.definicoes.items():
+        for idx, (nome, expressao) in enumerate(self.definicoes.items()):
             print(f"usando a definição de {nome}: {expressao}")
 
             try:
+                t0 = time.time()
                 er = ExpressaoRegular(expressao)
+                t1 = time.time()
+                print(f"1/4 Parse: {t1 - t0}")
+                t0 = time.time()
                 afd = self.conversor.gerar_afd(er)
+                t1 = time.time()
+                print(f"2/4 Gerar AFD: {t1 - t0}")
+
+                t0 = time.time()
                 afd = self.handler_automatos.minimizar(afd)
+                t1 = time.time()
+                print(f"3/4 Minimizar: {t1 - t0}")
 
-                afd.nome = nome
+                t0 = time.time()
+                afd_renomeado = self.renomear_estados_afd(afd, f"{nome}_")
+                t1 = time.time()
+                print(f"4/4 Renomear: {t1 - t0}")
 
-                for estado in afd.estados_finais:
+                for estado in afd_renomeado.estados_finais:
                     self.mapa_estados_padroes[estado] = nome
 
-                afds_minimizados.append(afd)
+                afds_minimizados.append(afd_renomeado)
             except Exception as e:
                 print(f"Erro ao gerar AFD para {nome}: {e}")
                 raise
@@ -159,12 +170,39 @@ class AnalisadorLexico:
         for afd in afds_minimizados[1:]:
             automato_unido = self.handler_automatos.uniao(automato_unido, afd)
 
-        automato_unido, mapeamento = self.handler_automatos.determinizar_com_mapeamento(automato_unido)
+        automato_unido, mapeamento = self.handler_automatos.determinizar_com_mapeamento(
+            automato_unido
+        )
         self.atualizar_mapeamento(mapeamento)
 
         self.automato_unificado = automato_unido
 
-    def analisar(self, arquivo: str, arquivo_saida: str | None = None) -> list[tuple[str, str]]:
+    def renomear_estados_afd(self, afd: Automato, prefixo: str) -> Automato:
+        # Criar mapeamento de estados antigos para novos
+        mapeamento = {}
+        for estado in afd.estados:
+            novo_nome = f"{prefixo}{estado.nome}"
+            mapeamento[estado] = Estado(novo_nome)
+
+        # Criar novas transições
+        novas_transicoes = {}
+        for (origem, simbolo), destinos in afd.transicoes.items():
+            nova_origem = mapeamento[origem]
+            novos_destinos = {mapeamento[d] for d in destinos}
+            novas_transicoes[(nova_origem, simbolo)] = novos_destinos
+
+        # Criar novo autômato
+        return Automato(
+            estados=set(mapeamento.values()),
+            simbolos=afd.simbolos.copy(),
+            transicoes=novas_transicoes,
+            estado_inicial=mapeamento[afd.estado_inicial],
+            estados_finais={mapeamento[e] for e in afd.estados_finais},
+        )
+
+    def analisar(
+        self, arquivo: str, arquivo_saida: str | None = None
+    ) -> list[tuple[str, str]]:
         tokens: list[tuple[str, str]] = []
         with open(arquivo, "r") as f:
             for num_linha, linha in enumerate(f, 1):
@@ -195,7 +233,9 @@ class AnalisadorLexico:
         ultima_posicao_valida = -1
 
         for i, simbolo in enumerate(palavra):
-            proximo = self.automato_unificado.transicoes.get((estado_atual, simbolo), set())
+            proximo = self.automato_unificado.transicoes.get(
+                (estado_atual, simbolo), set()
+            )
 
             if not proximo:
                 break
@@ -225,7 +265,22 @@ class AnalisadorLexico:
                         tokens_possiveis.append(token)
 
             if tokens_possiveis:
-                novo_mapa[estado_determinizado] = tokens_possiveis[0]
+                padrao_escolhido = None
+
+                for nome in self.definicoes.keys():
+                    if nome in tokens_possiveis:
+                        padrao_escolhido = nome
+                        break
+
+                if padrao_escolhido is None:
+                    padrao_escolhido = tokens_possiveis[0]
+
+                if len(tokens_possiveis) > 1:
+                    print(f"  Estado {estado_determinizado.nome}:")
+                    print(f"    Padrões possíveis: {tokens_possiveis}")
+                    print(f"    Escolhido (prioridade): {padrao_escolhido}")
+
+                novo_mapa[estado_determinizado] = padrao_escolhido
 
         self.mapa_estados_padroes = novo_mapa
 
