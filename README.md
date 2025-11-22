@@ -16,3 +16,19 @@
 - Para notacionar o epsilon use &.
 - A tabela de análise deve poder ser "vizualizada".
 - Os autômatos finitos gerados pela conversão das ERs também devem poder ser visualisados (arquivo ou tela - na forma de tabela).
+
+## HowTo
+1. No diretório do projeto, para executar a interface CLI, será necessário ter a lib rich instalado, para isso podemos utilizar um virtualenv e instalar a lib de forma descartável com o seguinte comando:
+   ```bash
+    python3 -m venv env
+    . env/bin/activate
+    pip install -r requirements.txt
+   ```
+  
+    (Se por algum motivo você não possuir o venv instalado, instale com: `sudo apt install python3-venv`)
+
+2. Em seguida, para executar o analisador léxico, basta rodar o seguinte comando:
+   ```bash
+   python main.py
+   ```
+3. Caso você queira executar o projeto de forma simples pelo VSCode, você pode selecionar o interpretador Python do virtualenv criado no passo 1, então após criar o virtualenv, abra o VSCode no diretório do projeto e selecione o interpretador com `Ctrl + Shift + P` e digitando `Python: Select Interpreter`, então escolha o interpretador dentro da pasta `env/bin/python`.
