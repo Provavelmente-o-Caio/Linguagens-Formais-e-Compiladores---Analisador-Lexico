@@ -5,7 +5,27 @@ EPSILON = "&"
 
 
 class ConversorER_AFD:
+    """
+    Conversor de Expressão Regular para Autômato Finito Determinístico.
+    
+    Referência: Aho et al., Seção 3.9.5 "Converting a Regular Expression Directly to a DFA",
+    Algoritmo 3.36, páginas 181-182.
+    
+    Implementa a construção direta de AFD a partir de ER, sem passar por AFND.
+    """
+    
     def gerar_afd(self, regex: ExpressaoRegular) -> Automato:
+        """Gera um AFD diretamente de uma expressão regular usando o algoritmo de construção direta.
+        
+        Passos:
+        1. Constrói árvore sintática aumentada (r).#
+        2. Calcula nullable, firstpos, lastpos para cada nodo
+        3. Calcula followpos para cada posição
+        4. Constrói estados: cada estado é um conjunto de posições
+        5. Estado inicial = firstpos(raiz)
+        6. Estados finais = aqueles que contêm a posição de #
+        7. Transições: δ(S, a) = ∪{followpos(p) | p ∈ S e símbolo[p] = a}
+        """
         raiz: NodoER = regex.processar()
         if not raiz.firstpos:
             return Automato(
@@ -67,6 +87,16 @@ class ConversorER_AFD:
         )
 
     def gerar_nomes(self, estados: frozenset[int] | None) -> str:
+        """Gera nome legível para um estado composto por um conjunto de posições.
+        
+        Estados do AFD são identificados pelos conjuntos de posições que representam.
+        
+        Args:
+            estados: Conjunto de posições (frozenset de inteiros) ou None.
+            
+        Returns:
+            String representando o estado: "∅" para conjunto vazio, "{p1,p2,...}" caso contrário.
+        """
         if not estados:
             return "∅"
         else:
