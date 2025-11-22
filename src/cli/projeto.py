@@ -17,34 +17,27 @@ def tela_projeto(analisador):
         table.add_column("Opção", justify="center", width=6)
         table.add_column("Descrição")
 
-        table.add_row("1", "Adicionar expressão regular")
-        table.add_row("2", "Gerar analisador léxico")
-        table.add_row("3", "Listar definições")
+        table.add_row("", "[bold cyan]Definições[/bold cyan]")
+        table.add_row("1", "Listar definições")
+        table.add_row("2", "Adicionar expressão regular")
+        table.add_row("3", "[bold]Gerar analisador léxico[/bold]")
+        table.add_row("", "")
+        table.add_row("", "[bold cyan]Execução em Passos[/bold cyan]")
         table.add_row("4", "Gerar AFDs (para todas as ERs)")
         table.add_row("5", "Minimizar AFDs")
         table.add_row("6", "Unir AFDs via ε")
         table.add_row("7", "Determinizar (autômato unido)")
+        table.add_row("", "")
+        table.add_row("", "[bold cyan]Tabelas[/bold cyan]")
         table.add_row("8", "Visualizar tabelas de transição")
-        table.add_row("0", "Voltar")
+        table.add_row("", "")
+        table.add_row("[red]0[/red]", "Voltar")
 
         console.print(table)
 
         op = Prompt.ask("\nSelecione", choices=[str(i) for i in range(0,9)], default="0")
 
         if op == "1":
-            nome = Prompt.ask("Nome da definição (ex: id)")
-            er = Prompt.ask("Expressão regular (use [a-zA-Z], *, +, ?, |, & para ε)")
-            analisador.definicoes[nome] = er
-            console.print(f"[green]ER '{nome}' adicionada![/green]")
-            input("ENTER para continuar...")
-        elif op == "2":
-            try:
-                analisador.gerar_analisador()
-                console.print("[green]Analisador léxico gerado com sucesso![/green]")
-            except Exception as e:
-                console.print(f"[red]Erro ao gerar analisador: {e}[/red]")
-            input("ENTER para continuar...")
-        elif op == "3":
             if not analisador.definicoes:
                 console.print("[yellow]Nenhuma definição cadastrada.[/yellow]")
             else:
@@ -55,6 +48,20 @@ def tela_projeto(analisador):
                     table.add_row(nome, er)
                 console.print(table)
             input("ENTER para continuar...")
+        elif op == "2":
+            nome = Prompt.ask("Nome da definição (ex: id)")
+            er = Prompt.ask("Expressão regular (use [a-zA-Z], *, +, ?, |, & para ε)")
+            analisador.definicoes[nome] = er
+            console.print(f"[green]ER '{nome}' adicionada![/green]")
+            input("ENTER para continuar...")
+        elif op == "3":
+            try:
+                analisador.gerar_analisador()
+                console.print("[green]Analisador léxico gerado com sucesso![/green]")
+            except Exception as e:
+                console.print(f"[red]Erro ao gerar analisador: {e}[/red]")
+            input("ENTER para continuar...")
+        
         elif op == "4":
             if not analisador.definicoes:
                 console.print("[red]Não há definições para gerar AFDs.[/red]")

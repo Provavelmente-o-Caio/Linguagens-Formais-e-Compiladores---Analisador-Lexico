@@ -213,3 +213,4 @@ __marimo__/
 ./testes
 ./shell.nix
 .idea/
+/tests/arquivos_saida/*

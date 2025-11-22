@@ -191,7 +191,7 @@ class AnalisadorLexico:
                 self.definicoes[nome] = er
                 print(f"Nova definição: {nome} = {er}")
 
-    def gerar_analizador(self):
+    def gerar_analisador(self):
         """Gera autômato unificado a partir das definições regulares.
         
         Processo:
@@ -286,9 +286,7 @@ class AnalisadorLexico:
             estados_finais={mapeamento[e] for e in afd.estados_finais},
         )
 
-    def analisar(
-        self, arquivo: str, arquivo_saida: str | None = None
-    ) -> list[tuple[str, str]]:
+    def analisar(self) -> list[tuple[str, str]]:
         """Realiza análise léxica de um arquivo fonte.
         
         Tokeniza cada palavra do arquivo usando o autômato unificado.

@@ -1,10 +1,10 @@
-from pathlib import Path
-
 from rich.console import Console
 from rich.prompt import Prompt
 from rich.panel import Panel
 from rich.table import Table
 from src.automatos import HandlerAutomatos
+
+from .utils import selecionar_arquivo_entrada, selecionar_arquivo_saida
 
 console = Console()
 handler = HandlerAutomatos()
@@ -18,7 +18,7 @@ def tela_execucao(analisador):
         table.add_column("Opção", justify="center", width=6)
         table.add_column("Descrição")
 
-        table.add_row("1", "Carregar arquivo de texto fonte")
+        table.add_row("1", "Alterar arquivo de entrada")
         table.add_row("2", "Analisar texto carregado")
         table.add_row("3", "Listar tokens gerados")
         table.add_row("4", "Exportar tokens para arquivo de saída")
@@ -28,16 +28,7 @@ def tela_execucao(analisador):
         op = Prompt.ask("\nSelecione", choices=["0","1","2","3","4"], default="0")
 
         if op == "1":
-            path = Prompt.ask("Caminho do arquivo (ex: tests/input_basic_1.txt)")
-            if not path:
-                path = "tests/input_basic_1.txt"
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    analisador.entrada_texto = f.read()
-                console.print(f"[green]Arquivo '{path}' carregado![/green]")
-            except Exception as e:
-                console.print(f"[red]Erro ao carregar arquivo: {e}[/red]")
-            input("ENTER para continuar...")
+            selecionar_arquivo_entrada(analisador)
         elif op == "2":
             if not getattr(analisador, "entrada_texto", None):
                 console.print("[yellow]Nenhum texto carregado. Carregue um arquivo primeiro.[/yellow]")
@@ -71,15 +62,8 @@ def tela_execucao(analisador):
 
             output_path = analisador.arquivo_saida
             if not output_path:
-                path = Prompt.ask("Caminho do arquivo de saída (ex: output/tokens.txt)")
-                if not path:
-                    path = "output/tokens.txt"
-                    console.print("[yellow]Caminho de saída definido como padrão: output/tokens.txt[/yellow]")
-                    input("ENTER para continuar...")
-                project_root = Path(__file__).resolve().parent.parent.parent / "tests"
-                output_path = project_root / path
-                
-                analisador.arquivo_saida = output_path
+                selecionar_arquivo_saida(analisador)
+                output_path = analisador.arquivo_saida
 
             try:
                 output_path.parent.mkdir(parents=True, exist_ok=True)
