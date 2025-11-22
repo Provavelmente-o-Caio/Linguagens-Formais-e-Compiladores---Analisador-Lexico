@@ -1,7 +1,7 @@
 import sys
 import pandas as pd
 from src.analisador_sintatico import AnalisadorSintatico
-from src.analisadorSLR import AnalisadorSLR, TabelaSLR
+from src.slr import AnalisadorSLR, TabelaSLR
 
 
 def imprimir_tabela_slr(tabela: TabelaSLR, num_estados: int):
