@@ -7,6 +7,7 @@ from rich.prompt import Prompt
 
 console = Console()
 
+
 def selecionar_arquivo_definicao(analisador):
     pasta = "tests/arquivos_definicao"
 
@@ -65,6 +66,7 @@ def selecionar_arquivo_definicao(analisador):
             console.print(f"[red]Erro ao carregar arquivo: {e}[/red]")
             input("Pressione ENTER para tentar novamente...")
 
+
 def selecionar_arquivo_entrada(analisador):
     pasta = "tests/arquivos_entrada"
 
@@ -116,13 +118,14 @@ def selecionar_arquivo_entrada(analisador):
 
         try:
             with open(arquivo_escolhido, "r", encoding="utf-8") as f:
-                analisador.entrada_texto = f.read()
+                analisador.entrada_texto = f.read().splitlines()
             console.print(f"[green]Arquivo '{arquivo_escolhido}' carregado![/green]")
             input("Pressione ENTER para continuar...")
             return
         except Exception as e:
             console.print(f"[red]Erro ao carregar arquivo: {e}[/red]")
             input("Pressione ENTER para continuar...")
+
 
 def selecionar_arquivo_saida(analisador):
     pasta = Path(__file__).resolve().parent.parent.parent / "tests/arquivos_saida"

@@ -9,6 +9,7 @@ from .utils import selecionar_arquivo_entrada, selecionar_arquivo_saida
 console = Console()
 handler = HandlerAutomatos()
 
+
 def tela_execucao(analisador):
     while True:
         console.clear()
@@ -25,7 +26,7 @@ def tela_execucao(analisador):
         table.add_row("0", "Voltar")
 
         console.print(table)
-        op = Prompt.ask("\nSelecione", choices=["0","1","2","3","4"], default="0")
+        op = Prompt.ask("\nSelecione", choices=["0", "1", "2", "3", "4"], default="0")
 
         if op == "1":
             selecionar_arquivo_entrada(analisador)
