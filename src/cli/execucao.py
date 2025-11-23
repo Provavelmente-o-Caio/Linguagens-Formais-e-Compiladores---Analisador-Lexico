@@ -1,7 +1,8 @@
 from rich.console import Console
-from rich.prompt import Prompt
 from rich.panel import Panel
+from rich.prompt import Prompt
 from rich.table import Table
+
 from src.automatos import HandlerAutomatos
 
 from .utils import selecionar_arquivo_entrada, selecionar_arquivo_saida
@@ -32,20 +33,26 @@ def tela_execucao(analisador):
             selecionar_arquivo_entrada(analisador)
         elif op == "2":
             if not getattr(analisador, "entrada_texto", None):
-                console.print("[yellow]Nenhum texto carregado. Carregue um arquivo primeiro.[/yellow]")
+                console.print(
+                    "[yellow]Nenhum texto carregado. Carregue um arquivo primeiro.[/yellow]"
+                )
                 input("ENTER para continuar...")
                 continue
             try:
                 tokens = analisador.analisar()
                 analisador.ultima_lista_tokens = tokens
-                console.print(f"[green]Análise concluída! {len(tokens)} tokens gerados.[/green]")
+                console.print(
+                    f"[green]Análise concluída! {len(tokens)} tokens gerados.[/green]"
+                )
             except Exception as e:
                 console.print(f"[red]Erro durante a análise: {e}[/red]")
             input("ENTER para continuar...")
         elif op == "3":
             tokens = getattr(analisador, "ultima_lista_tokens", None)
             if not tokens:
-                console.print("[yellow]Nenhuma lista de tokens disponível. Execute a análise primeiro.[/yellow]")
+                console.print(
+                    "[yellow]Nenhuma lista de tokens disponível. Execute a análise primeiro.[/yellow]"
+                )
             else:
                 table = Table(title="Tokens Encontrados", show_header=True)
                 table.add_column("Lexema")
@@ -71,7 +78,7 @@ def tela_execucao(analisador):
 
                 with output_path.open("w", encoding="utf-8") as f:
                     for token in tokens:
-                        f.write(f"{token[0]} -> {token[1]}\n")
+                        f.write(f"<{token[0]}, {token[1]}>\n")
                 console.print(f"[green]Tokens exportados para {output_path}[/green]")
             except Exception as e:
                 console.print(f"[red]Erro ao exportar: {e}[/red]")
