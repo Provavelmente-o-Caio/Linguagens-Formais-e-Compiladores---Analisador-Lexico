@@ -4,10 +4,10 @@ from src.gramaticas import (
     NaoTerminal,
     Producao,
     EPSILON,
+    NAO_TERMINAL_ESCAPE,
     Gramatica,
     HandlerGramatica,
 )
-
 
 class AnalisadorSintatico:
     """Analisador sintático SLR (Simple LR).
@@ -169,8 +169,20 @@ class AnalisadorSintatico:
                 i += 1
                 continue
             
+            # Terminal escapado: "..."
+            if corpo_str[i] == NAO_TERMINAL_ESCAPE:
+                fim = corpo_str.find(NAO_TERMINAL_ESCAPE, i + 1)
+                if fim == -1:
+                    raise ValueError(
+                        f"Terminal escapado não fechado: {corpo_str[i:]}"
+                    )
+                nome = corpo_str[i+1:fim]
+                simbolo = Terminal(nome)
+                terminais.add(simbolo)
+                simbolos.append(simbolo)
+                i = fim + 1
             # Não-terminal: <...>
-            if corpo_str[i] == "<":
+            elif corpo_str[i] == "<":
                 fim = corpo_str.find(">", i)
                 if fim == -1:
                     raise ValueError(
@@ -183,9 +195,9 @@ class AnalisadorSintatico:
                 i = fim + 1
             else:
                 # Terminal: qualquer outro caractere ou sequência
-                # Ler até próximo < ou espaço
+                # Ler até próximo < ou espaço ou "
                 fim = i + 1
-                while fim < len(corpo_str) and corpo_str[fim] not in ["<", " "]:
+                while fim < len(corpo_str) and corpo_str[fim] not in ["<", " ", NAO_TERMINAL_ESCAPE]:
                     fim += 1
                 
                 nome = corpo_str[i:fim].strip()

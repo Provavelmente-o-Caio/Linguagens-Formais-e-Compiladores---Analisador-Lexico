@@ -3,6 +3,7 @@ from abc import ABC
 
 
 EPSILON = "&"
+NAO_TERMINAL_ESCAPE = "\""
 
 
 @dataclass(frozen=True)
