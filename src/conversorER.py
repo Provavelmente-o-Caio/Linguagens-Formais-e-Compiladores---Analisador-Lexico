@@ -8,9 +8,11 @@ class ConversorER_AFD:
     """
     Conversor de Expressão Regular para Autômato Finito Determinístico.
     
-    Referência: Aho et al., Seção 3.9 "De uma Expressão Regular para um AFD".
-    
     Implementa a construção direta de AFD a partir de ER, sem passar por AFND.
+    Utiliza o algoritmo de construção direta com cálculo de nullable, firstpos,
+    lastpos e followpos.
+    
+    Referência: Aho et al. (2006), Seção 3.9, Algoritmo 3.36, pp. 159-167.
     """
     
     def gerar_afd(self, regex: ExpressaoRegular) -> Automato:

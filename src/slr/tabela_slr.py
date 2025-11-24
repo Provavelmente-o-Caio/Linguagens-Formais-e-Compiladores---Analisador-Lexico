@@ -7,7 +7,7 @@ from .item_lr import ItemLR
 class TabelaSLR:
     """Tabela de parsing SLR contendo ACTION e GOTO.
     
-    Referência: Aho et al., Seção 4.7
+    Referência: Aho et al. (2006), Seção 4.7.3, Figura 4.38, pp. 258-261.
     """
     
     def __init__(self):

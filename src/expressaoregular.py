@@ -30,7 +30,7 @@ class NodoER:
     Representa um nodo interno (operador) ou folha (símbolo) da árvore da ER.
     Armazena informações para construção direta de AFD (análise léxica).
 
-    Referência: Aho et al., Seção 3.9 "De uma Expressão Regular para um AFD".
+    Referência: Aho et al. (2006), Seção 3.9, Figura 3.60.
 
     Attributes:
         tipo: Tipo do nodo ("SIMBOLO", "|", ".", "*").
@@ -149,7 +149,7 @@ class ExpressaoRegular:
     auxiliares (nullable, firstpos, lastpos, followpos) para construção
     direta de AFD (analisador léxico) sem passar por AFND.
 
-    Referência: Aho et al., Seção 3.9 "De Expressões Regulares para Autômatos".
+    Referência: Aho et al. (2006), Seção 3.9, pp. 159-167.
     """
 
     def __init__(self, expressao: str) -> None:

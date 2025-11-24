@@ -10,7 +10,7 @@ class ItemLR:
     Um item LR(0) indica uma posição de parsing dentro de uma produção.
     O ponto (·) marca até onde foi reconhecido.
     
-    Referência: Aho et al., Seção 4.7
+    Referência: Aho et al. (2006), Seção 4.6.2, pp. 241-246.
     
     Attributes:
         producao: Produção da gramática (A ::= αβ)

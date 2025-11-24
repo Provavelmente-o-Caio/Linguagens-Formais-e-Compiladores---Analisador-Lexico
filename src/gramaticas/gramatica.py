@@ -11,7 +11,7 @@ class Gramatica:
     - Símbolos terminais e não-terminais
     - Símbolo inicial
     
-    Referência: Aho et al., Seção 4.1
+    Referência: Aho et al. (2006), Seção 4.1, Definição 4.1, pp. 191-194.
     
     Attributes:
         producoes: Lista de produções da gramática.

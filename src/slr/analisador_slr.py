@@ -17,7 +17,7 @@ class AnalisadorSLR:
     Constrói a coleção canônica de conjuntos de itens LR(0) e
     gera tabelas ACTION e GOTO para parsing SLR.
 
-    Referência: Aho et al., Seção 4.7
+    Referência: Aho et al. (2006), Seção 4.7, Algs. 4.44-4.46, pp. 253-271.
     """
     
     def __init__(self, gramatica: Gramatica, handler: HandlerGramatica):

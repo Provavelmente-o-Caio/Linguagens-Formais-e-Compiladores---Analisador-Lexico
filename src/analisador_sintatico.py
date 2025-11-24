@@ -20,7 +20,7 @@ class AnalisadorSintatico:
     gramáticas livres de contexto. Constrói tabelas ACTION e GOTO para
     parsing bottom-up.
     
-    Referência: Aho et al., Seção 4.7
+    Referência: Aho et al. (2006), Seção 4.7, Algoritmo 4.46, pp. 253-271.
     """
     
     def __init__(self):
