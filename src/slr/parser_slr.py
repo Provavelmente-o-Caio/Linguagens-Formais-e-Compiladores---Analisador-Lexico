@@ -21,7 +21,9 @@ class ParserSLR:
         pilha: list[int] = [0]
         simbolo: list[Terminal | NaoTerminal] = []
         entrada = [(lexema, tipo) for lexema, tipo in tokens]
-        entrada.append(("$", "EOF"))  # Fim de entrada
+        # Adicionar EOF apenas se não estiver presente
+        if not entrada or entrada[-1][1] not in ["$", "EOF"]:
+            entrada.append(("$", "$"))  # Fim de entrada
         posicao = 0
         self.derivacao.clear()
 

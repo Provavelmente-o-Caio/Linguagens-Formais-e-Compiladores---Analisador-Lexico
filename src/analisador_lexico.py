@@ -397,6 +397,22 @@ class AnalisadorLexico:
 
         self.mapa_estados_padroes = novo_mapa
 
+    def salvar_tokens(self, tokens: list[tuple[str, str]], arquivo_saida: str):
+        """Salva lista de tokens em arquivo.
+        
+        Formato de saída: uma linha por token
+        <lexema, tipo>
+        
+        Args:
+            tokens: Lista de tuplas (lexema, tipo)
+            arquivo_saida: Caminho do arquivo de saída
+        """
+        with open(arquivo_saida, 'w') as f:
+            for lexema, tipo in tokens:
+                f.write(f"<{lexema}, {tipo}>\n")
+        
+        print(f"Tokens salvos em '{arquivo_saida}'")
+
     def visualizar_automato(self):
         """Exibe tabela de transições do autômato unificado.
 

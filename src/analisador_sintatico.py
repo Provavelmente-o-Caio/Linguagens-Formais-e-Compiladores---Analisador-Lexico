@@ -8,6 +8,10 @@ from src.gramaticas import (
     Gramatica,
     HandlerGramatica,
 )
+from src.slr import AnalisadorSLR, ParserSLR
+from src.tabela_simbolos import TabelaSimbolos, CategoriaLexica
+from src.expressaoregular import MAPA_OPERADORES, OPERADORES_UNITARIOS
+
 
 class AnalisadorSintatico:
     """Analisador sintático SLR (Simple LR).
@@ -223,11 +227,150 @@ class AnalisadorSintatico:
         Raises:
             ValueError: Se a gramática não foi carregada.
         """
-        if self.gramatica is None:
-            raise ValueError("Gramática não foi carregada. Use ler_gramatica() primeiro.")
-        
-        if self._handler is None:
+        if not self.gramatica:
+            raise ValueError("Gramática não foi carregada ainda")
+
+        if not self._handler:
             self._handler = HandlerGramatica(self.gramatica)
         
         return self._handler
+
+    
+    def _criar_tabela_simbolos(self):
+        """Cria tabela de símbolos e extrai palavras reservadas da gramática.
+        
+        Returns:
+            TabelaSimbolos inicializada com palavras reservadas
+        """
+        self.tabela_simbolos = TabelaSimbolos()
+
+        for terminal in self.gramatica.terminais:
+            if terminal.nome.isalpha() or terminal.nome.isalnum():
+                self.tabela_simbolos.inserir_palavra_reservada(terminal.nome)
+        
+    
+    def _processar_tokens(self, tokens: list[tuple[str, str]]) -> list[tuple[str, str]]:
+        """Processa tokens aplicando tabela de símbolos e mapeamento para gramática.
+        
+        Args:
+            tokens: Lista de tuplas (lexema, tipo)
+            
+        Returns:
+            Lista de tokens processados e mapeados
+        """
+        # Construir mapa automático: lexema → terminal
+        mapa_lexema_terminal = {}
+        for terminal in self.gramatica.terminais:
+            if len(terminal.nome) <= 2 and not terminal.nome.isalnum():
+                mapa_lexema_terminal[terminal.nome] = terminal.nome
+
+        tokens_processados = []
+        for lexema, tipo_lexico in tokens:
+            if tipo_lexico in CategoriaLexica.categorias_processaveis():
+                _, categoria = self.tabela_simbolos.categorizar_token(lexema, tipo_lexico)
+
+                if CategoriaLexica.palavra_reservada(categoria):
+                    tipo_gramatica = lexema
+                elif categoria.isdigit():
+                    tipo_gramatica = 'id'
+                else:
+                    tipo_gramatica = tipo_lexico
+                
+                tokens_processados.append((lexema, tipo_gramatica))
+            else:
+                if lexema in mapa_lexema_terminal:
+                    tokens_processados.append((lexema, lexema))
+                else:
+                    tokens_processados.append((lexema, tipo_lexico))
+        
+        return tokens_processados
+    
+    def _normalizar_lexema(self, lexema: str) -> str:
+        """Normaliza lexema Unicode de volta para ASCII.
+        
+        Usa os mapas de operadores de expressaoregular.py para converter
+        símbolos Unicode (⊕, ×, etc.) de volta para ASCII (+, *, etc.).
+        
+        Args:
+            lexema: Lexema possivelmente em Unicode
+            
+        Returns:
+            Lexema normalizado em ASCII
+        """
+        mapa_reverso = {}
+        
+        # MAPA_OPERADORES: multi-caractere (>=, <=, ==, etc.)
+        for ascii_op, unicode_op in MAPA_OPERADORES.items():
+            mapa_reverso[unicode_op] = ascii_op
+        
+        # OPERADORES_UNITARIOS: single-caractere (+, -, *, etc.)
+        for ascii_op, unicode_op in OPERADORES_UNITARIOS.items():
+            mapa_reverso[unicode_op] = ascii_op
+
+        return mapa_reverso.get(lexema, lexema)
+    
+    def _ler_tokens_arquivo(self, arquivo: str) -> list[tuple[str, str]]:
+        """Lê tokens de um arquivo no formato <lexema, tipo>.
+        
+        Args:
+            arquivo: Caminho do arquivo de tokens
+            
+        Returns:
+            Lista de tuplas (lexema, tipo)
+        """
+        tokens = []
+        with open(arquivo, 'r') as f:
+            for linha in f:
+                linha = linha.strip()
+                if not linha or linha.startswith('#'):
+                    continue
+                
+                # Formato esperado: <lexema, tipo>
+                if linha.startswith('<') and linha.endswith('>'):
+                    conteudo = linha[1:-1]  # Remove < e >
+                    if ', ' in conteudo:
+                        partes = conteudo.split(', ', 1)
+                        if len(partes) == 2:
+                            lexema, tipo = partes
+                            # Normalizar lexema para ASCII
+                            lexema = self._normalizar_lexema(lexema)
+                            tokens.append((lexema, tipo))
+
+        print(f"Tokens carregados com successo do arquivo [{arquivo}]")
+        
+        return tokens
+
+    def analisar(self, arquivo_tokens: str) -> bool:
+        """Executa análise sintática completa a partir de arquivo de tokens.
+
+        Args:
+            arquivo_tokens: Caminho do arquivo com tokens (formato: <lexema, tipo>)
+            
+        Returns:
+            True se sentença aceita, False se erro sintático
+        """
+        self._criar_tabela_simbolos()
+
+        tokens = self._ler_tokens_arquivo(arquivo_tokens)
+        tokens = self._processar_tokens(tokens)
+        
+        handler = self._obter_handler()
+        handler.calcular_firsts()
+        handler.calcular_follows()
+        
+        # Construir coleção canônica e tabelas
+        analisador_slr = AnalisadorSLR(self.gramatica, handler)
+        analisador_slr.construir_colecao_canonica()
+        tabela = analisador_slr.construir_tabela()
+        
+        parser = ParserSLR(tabela, self.gramatica, analisador_slr.producao_inicial)
+        resultado = parser.parsear(tokens)
+        
+        if resultado:
+            print("SENTENÇA ACEITA!")
+            parser.imprimir_derivacao()
+        else:
+            print("ERRO SINTÁTICO!")
+
+        return resultado
 
