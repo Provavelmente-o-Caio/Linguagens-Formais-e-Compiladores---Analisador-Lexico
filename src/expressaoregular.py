@@ -168,23 +168,64 @@ class ExpressaoRegular:
 
     def formatar_expressao(self, expressao: str) -> str:
         """
-        Insere concatenação explícita (.) onde necessário.
-
-        A concatenação explícita facilita o parsing e construção da árvore da ER.
+        Insere concatenação explícita (.) onde necessário,
+        tratando corretamente sequências escapadas como \.
         """
+
         resultado: list[str] = []
         anterior: str | None = None
 
-        for atual in expressao:
-            if anterior:
-                if (anterior.isalnum() or anterior in [")", "*", "+", "?"]) and (
-                    atual.isalnum() or atual == "("
-                ):
+        i = 0
+
+        while i < len(expressao):
+            atual = expressao[i]
+            if atual == "\\":
+                # se for o último caractere, apenas adiciona
+                if i + 1 >= len(expressao):
+                    raise ValueError("Barra invertida no final da expressão")
+
+                escapado = expressao[i + 1]
+
+                # símbolo escapado deve ser tratado como um único token
+                token = "\\" + escapado
+
+                # inserir concatenação antes do token apenas se anterior for símbolo verdadeiro
+                if anterior is not None:
+                    anterior_simbolo = (
+                        anterior.isalnum()
+                        or anterior in [")", "*", "+", "?"]
+                        or anterior == "ESCAPED"
+                    )
+                    # o token escapado é um símbolo
+                    if anterior_simbolo:
+                        resultado.append(".")
+
+                # adiciona o token escapado
+                resultado.append("\\")
+                resultado.append(escapado)
+
+                anterior = "ESCAPED"  # impede concatenação interna
+                i += 2
+                continue
+
+            if anterior is not None:
+                anterior_simbolo = (
+                    anterior.isalnum()
+                    or anterior in [")", "*", "+", "?"]
+                    or anterior == "ESCAPED"
+                )
+
+                atual_simbolo = (atual.isalnum() or atual == "(")
+
+                if anterior_simbolo and atual_simbolo:
                     resultado.append(".")
+
             resultado.append(atual)
             anterior = atual
+            i += 1
 
         return "".join(resultado)
+
 
     def parse(self) -> NodoER:
         """
@@ -204,6 +245,8 @@ class ExpressaoRegular:
 
         # Verifica se ainda há tokens não consumidos (exceto quando tudo foi parseado corretamente)
         if self.olhar() is not None and self.olhar() not in [")", None]:
+            print(self.olhar())
+            print(self.expressao)
             raise ValueError(f"Caractere inesperado após parse: {self.olhar()}")
 
         return nodo
@@ -273,11 +316,23 @@ class ExpressaoRegular:
             raise ValueError(f"Operador '{atual}' sem operando à esquerda")
 
         if atual == "(":
+            print("entrou parênteses")
             _ = self.consume("(")
             nodo = self.parse()
             if self.olhar() != ")":
                 raise ValueError(f"Esperado ')', obtido: {self.olhar()}")
             _ = self.consume(")")
+            print("saiu parênteses")
+            return nodo
+
+        if atual == "\\":
+            # Símbolo escapado
+            _ = self.consume("\\")
+            token: str = self.consume(None)
+            nodo: NodoER = NodoER("SIMBOLO", token, self.posicao)
+            self.folhas[self.posicao] = nodo
+            self.posicao += 1
+            print("token: ", token)
             return nodo
 
         # Qualquer outro símbolo (incluindo '#' de fim) é tratado como SIMBOLO

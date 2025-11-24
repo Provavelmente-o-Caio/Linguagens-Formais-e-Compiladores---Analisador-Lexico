@@ -212,7 +212,7 @@ class AnalisadorLexico:
 
         afds_minimizados: list[Automato] = []
 
-        for idx, (nome, expressao) in enumerate(self.definicoes.items()):
+        for nome, expressao in self.definicoes.items():
             print(f"usando a definição de {nome}: {expressao}")
 
             try:
