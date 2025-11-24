@@ -1,19 +1,37 @@
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import override
 
 EPSILON = "&"
+MAPA_OPERADORES = {
+    ">=": "≥",
+    "<=": "≤",
+    "==": "≡",
+    "<>": "≠",
+    "!=": "≠",
+    ":=": "←",
+}
+OPERADORES_UNITARIOS = {
+    "+": "⊕",
+    "-": "−",
+    "*": "×",
+    "/": "÷",
+    "(": "⟮",
+    ")": "⟯",
+    ".": "•",
+}
 
 
 @dataclass
 class NodoER:
     """Nodo da árvore de uma expressão regular.
-    
+
     Representa um nodo interno (operador) ou folha (símbolo) da árvore da ER.
     Armazena informações para construção direta de AFD (análise léxica).
-    
+
     Referência: Aho et al., Seção 3.9 "De uma Expressão Regular para um AFD".
-    
+
     Attributes:
         tipo: Tipo do nodo ("SIMBOLO", "|", ".", "*").
         valor: Símbolo para folhas, None para operadores.
@@ -25,6 +43,7 @@ class NodoER:
         nodo_esquerda: Subárvore esquerda (para operadores binários e unários).
         nodo_direita: Subárvore direita (para operadores binários).
     """
+
     # valor nodo
     tipo: str  # simbolo, *, ?, |, (, ), .
     valor: str | None = None
@@ -43,7 +62,7 @@ class NodoER:
     def calcula_posicoes(self) -> None:
         """
         Calcula nullable, firstpos e lastpos para um nodo da árvore da ER.
-        
+
         As regras são:
         - Para folha (símbolo): nullable = false (exceto ε), firstpos = lastpos = {pos}
         - Para união (|): nullable = c1.nullable OU c2.nullable
@@ -62,7 +81,7 @@ class NodoER:
         elif self.tipo == "|":
             if self.nodo_esquerda and self.nodo_direita:
                 self.nullable = (
-                        self.nodo_esquerda.nullable or self.nodo_direita.nullable
+                    self.nodo_esquerda.nullable or self.nodo_direita.nullable
                 )
                 self.firstpos = self.nodo_esquerda.firstpos.union(
                     self.nodo_direita.firstpos
@@ -77,7 +96,7 @@ class NodoER:
         elif self.tipo == ".":
             if self.nodo_esquerda and self.nodo_direita:
                 self.nullable = (
-                        self.nodo_esquerda.nullable and self.nodo_direita.nullable
+                    self.nodo_esquerda.nullable and self.nodo_direita.nullable
                 )
                 if self.nodo_esquerda.nullable:
                     self.firstpos = self.nodo_esquerda.firstpos.union(
@@ -125,23 +144,24 @@ class NodoER:
 
 class ExpressaoRegular:
     """Processador de expressões regulares para construção direta de AFD.
-    
+
     Implementa análise de ERs com parser descendente recursivo e cálculo de funções
     auxiliares (nullable, firstpos, lastpos, followpos) para construção
     direta de AFD (analisador léxico) sem passar por AFND.
-    
+
     Referência: Aho et al., Seção 3.9 "De Expressões Regulares para Autômatos".
     """
-    
+
     def __init__(self, expressao: str) -> None:
         """Inicializa processador de ER.
-        
+
         Adiciona concatenação explícita e marcador de fim (#) automaticamente.
-        
+
         Args:
             expressao: String contendo a expressão regular.
         """
         # Adiciona concatenação explícita com # para marcar fim da expressão
+        expressao = substituir_operadores_multicaracteres(expressao)
         self.expressao: list[str] = list(f"({self.formatar_expressao(expressao)}).#")
         self.posicao: int = 1
         self.folhas: dict[int, NodoER] = {}
@@ -149,7 +169,7 @@ class ExpressaoRegular:
     def formatar_expressao(self, expressao: str) -> str:
         """
         Insere concatenação explícita (.) onde necessário.
-        
+
         A concatenação explícita facilita o parsing e construção da árvore da ER.
         """
         resultado: list[str] = []
@@ -158,7 +178,7 @@ class ExpressaoRegular:
         for atual in expressao:
             if anterior:
                 if (anterior.isalnum() or anterior in [")", "*", "+", "?"]) and (
-                        atual.isalnum() or atual == "("
+                    atual.isalnum() or atual == "("
                 ):
                     resultado.append(".")
             resultado.append(atual)
@@ -169,7 +189,7 @@ class ExpressaoRegular:
     def parse(self) -> NodoER:
         """
         Parser descendente recursivo para expressões regulares.
-        
+
         Analisa a estrutura da ER seguindo precedência de operadores:
         E → C ('|' C)*        (união - menor precedência)
         C → K ('.' K)*        (concatenação)
@@ -190,9 +210,9 @@ class ExpressaoRegular:
 
     def parse_concatenacao(self) -> NodoER:
         """Parseia concatenação de expressões.
-        
+
         Estrutura: C → K ('.' K)*
-        
+
         Returns:
             Nodo representando concatenação de subexpressões.
         """
@@ -204,13 +224,13 @@ class ExpressaoRegular:
 
     def parse_kleene(self) -> NodoER:
         """Parseia operadores de Kleene (*, +, ?).
-        
+
         Estrutura: K → A ('*'|'+'|'?')*
         Expansões:
         - a* → fecho de Kleene
         - a+ → a.a* (uma ou mais ocorrências)
         - a? → (a|ε) (opcional)
-        
+
         Returns:
             Nodo representando expressão com operadores de Kleene aplicados.
         """
@@ -238,12 +258,12 @@ class ExpressaoRegular:
 
     def parse_atomico(self) -> NodoER:
         """Parseia expressões atômicas (símbolos ou subexpressões entre parênteses).
-        
+
         Estrutura: A → símbolo | '(' E ')'
-        
+
         Returns:
             Nodo representando símbolo individual ou subexpressão.
-            
+
         Raises:
             ValueError: Se encontrar operador sem operando ou parênteses desbalanceados.
         """
@@ -266,17 +286,18 @@ class ExpressaoRegular:
         nodo: NodoER = NodoER("SIMBOLO", token, self.posicao)
         self.folhas[self.posicao] = nodo
         self.posicao += 1
+        print("token: ", token)
         return nodo
 
     def consume(self, esperado: str | None) -> str:
         """Consome próximo token da entrada.
-        
+
         Args:
             esperado: Token esperado ou None para aceitar qualquer token.
-            
+
         Returns:
             Token consumido.
-            
+
         Raises:
             ValueError: Se token não corresponder ao esperado ou entrada estiver vazia.
         """
@@ -291,7 +312,7 @@ class ExpressaoRegular:
 
     def olhar(self) -> str | None:
         """Retorna próximo token sem consumi-lo (lookahead).
-        
+
         Returns:
             Próximo token ou None se entrada vazia.
         """
@@ -299,13 +320,13 @@ class ExpressaoRegular:
 
     def copiar_subarvore(self, nodo: NodoER) -> NodoER:
         """Cria cópia profunda de uma subárvore com novas posições.
-        
+
         Necessário para expansão de operadores como a+ → a.a*, onde o símbolo
         'a' aparece duas vezes e precisa de posições distintas.
-        
+
         Args:
             nodo: Raiz da subárvore a ser copiada.
-            
+
         Returns:
             Nova subárvore com mesma estrutura mas novas posições para símbolos.
         """
@@ -333,7 +354,7 @@ class ExpressaoRegular:
     def calcular_followpos(self, raiz: NodoER | None) -> None:
         """
         Calcula o conjunto followpos de todos os nodos da árvore.
-        
+
         Regras:
         - Para concatenação (n = c1.c2): para cada i em lastpos(c1), followpos(i) contém firstpos(c2)
         - Para fecho (n = c1*): para cada i em lastpos(n), followpos(i) contém firstpos(n)
@@ -355,7 +376,7 @@ class ExpressaoRegular:
     def visitar(self, n: NodoER | None):
         """
         Calcula as posições de um nodo e de seus nodos abaixo recursivamente.
-        
+
         Percorre a árvore em pós-ordem para calcular nullable, firstpos, lastpos.
         """
         if n is None:
@@ -368,7 +389,7 @@ class ExpressaoRegular:
     def processar(self) -> NodoER:
         """
         Processa a expressão regular e retorna a raiz da árvore construída.
-        
+
         Passos:
         1. Constrói árvore da ER aumentada (adiciona # no final)
         2. Calcula nullable, firstpos, lastpos para cada nodo
@@ -380,3 +401,15 @@ class ExpressaoRegular:
         self.calcular_followpos(raiz)
 
         return raiz
+
+
+def substituir_operadores_multicaracteres(expressao: str):
+    # substitui multi-caracter
+    for op in sorted(MAPA_OPERADORES, key=len, reverse=True):
+        expressao = expressao.replace(op, MAPA_OPERADORES[op])
+
+    # substitui unitários APENAS se expressão for exatamente o operador
+    if expressao in OPERADORES_UNITARIOS:
+        return OPERADORES_UNITARIOS[expressao]
+
+    return expressao

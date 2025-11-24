@@ -3,21 +3,21 @@ import time
 
 from src.automatos import Automato, Estado, HandlerAutomatos
 from src.conversorER import ConversorER_AFD
-from src.expressaoregular import ExpressaoRegular
+from src.expressaoregular import ExpressaoRegular, substituir_operadores_multicaracteres
 
 
 class AnalisadorLexico:
     """Analisador léxico baseado em autômatos finitos determinísticos.
-    
+
     Implementa um lexer completo que converte definições regulares em AFDs,
     unifica múltiplos AFDs e realiza análise léxica de código fonte.
-    
+
     Referência: Aho et al., Capítulo 3 "Análise Léxica".
     """
-    
+
     def __init__(self):
         """Inicializa o analisador léxico com estruturas vazias.
-        
+
         Inicializa conversor de ER para AFD, handler de autômatos, dicionário de
         definições regulares e estruturas para o autômato unificado.
         """
@@ -43,13 +43,13 @@ class AnalisadorLexico:
 
     def expandir_match(self, match):
         """Expande um grupo de caracteres em uma expressão de união.
-        
+
         Args:
             match: Objeto Match do regex contendo o grupo capturado.
-            
+
         Returns:
             String com união explícita: "(a|b|c|...)".
-            
+
         Raises:
             ValueError: Se o grupo estiver vazio ou for inválido.
         """
@@ -64,15 +64,15 @@ class AnalisadorLexico:
 
     def processar_grupos(self, conteudo: str) -> list[str]:
         """Processa conteúdo de um grupo expandindo ranges de caracteres.
-        
+
         Suporta ranges como a-z, A-Z, 0-9 e caracteres individuais.
-        
+
         Args:
             conteudo: String contendo o conteúdo interno do grupo.
-            
+
         Returns:
             Lista de caracteres individuais expandidos.
-            
+
         Raises:
             ValueError: Se encontrar range inválido.
         """
@@ -97,17 +97,17 @@ class AnalisadorLexico:
 
     def expandir_caracter(self, inicio: str, fim: str) -> list[str]:
         """Expande um range de caracteres (ex: a-z) em lista de caracteres.
-        
+
         Valida que início e fim sejam do mesmo tipo (letra ou dígito) e que
         o início venha antes do fim na ordenação.
-        
+
         Args:
             inicio: Caractere inicial do range.
             fim: Caractere final do range.
-            
+
         Returns:
             Lista com todos os caracteres do range [início, fim].
-            
+
         Raises:
             ValueError: Se o range for inválido (tipos incompatíveis ou ordem incorreta).
         """
@@ -148,13 +148,13 @@ class AnalisadorLexico:
 
     def ler_definicoes(self, arquivo: str):
         """Lê definições regulares de um arquivo.
-        
+
         Formato esperado: nome:expressao_regular
         Linhas começando com # são tratadas como comentários.
-        
+
         Args:
             arquivo: Caminho do arquivo de definições.
-            
+
         Raises:
             ValueError: Se encontrar linha com formato inválido.
         """
@@ -165,13 +165,16 @@ class AnalisadorLexico:
                 if linha.startswith("#"):
                     continue
 
+                if linha == (""):
+                    continue
+
                 if ":" not in linha:
                     raise ValueError(
                         f"Linha {num_linha} com formato inválido"
                         f"Esperava 'nome:expressao', obteve: {linha}"
                     )
 
-                nome, er = linha.split(":")
+                nome, er = linha.split(":", 1)
                 nome = nome.strip()
                 er = er.strip()
 
@@ -193,14 +196,14 @@ class AnalisadorLexico:
 
     def gerar_analisador(self):
         """Gera autômato unificado a partir das definições regulares.
-        
+
         Processo:
         1. Converte cada ER em AFD
         2. Minimiza cada AFD
         3. Une todos os AFDs via ε-transições
         4. Determiniza o autômato unificado
         5. Mapeia estados finais aos seus padrões/tokens
-        
+
         Raises:
             ValueError: Se nenhuma definição foi adicionada ou se ocorrer erro na conversão.
         """
@@ -254,13 +257,13 @@ class AnalisadorLexico:
 
     def renomear_estados_afd(self, afd: Automato, prefixo: str) -> Automato:
         """Renomeia todos os estados de um AFD adicionando um prefixo.
-        
+
         Útil para evitar conflitos de nomes ao unir múltiplos autômatos.
-        
+
         Args:
             afd: Autômato finito determinístico.
             prefixo: String a ser adicionada antes de cada nome de estado.
-            
+
         Returns:
             Novo autômato com estados renomeados.
         """
@@ -288,14 +291,14 @@ class AnalisadorLexico:
 
     def analisar(self) -> list[tuple[str, str]]:
         """Realiza análise léxica de um arquivo fonte.
-        
+
         Tokeniza cada palavra do arquivo usando o autômato unificado.
         Linhas começando com # ou vazias são ignoradas.
-        
+
         Args:
             arquivo: Caminho do arquivo fonte a ser analisado.
             arquivo_saida: Caminho opcional para salvar tokens gerados.
-            
+
         Returns:
             Lista de tuplas (lexema, padrão) ou (lexema, "erro!") para tokens inválidos.
         """
@@ -317,15 +320,16 @@ class AnalisadorLexico:
 
     def tokenizar(self, palavra: str):
         """Tokeniza uma palavra usando o autômato unificado.
-        
+
         Implementa longest match: consome o maior prefixo válido da palavra.
-        
+
         Args:
             palavra: String a ser tokenizada.
-            
+
         Returns:
             Tupla (lexema, padrão) se reconhecido, ou (lexema, "erro!") caso contrário.
         """
+        palavra = substituir_operadores_multicaracteres(palavra)
         estado_atual = self.automato_unificado.estado_inicial
 
         ultimo_estado_final = None
@@ -354,11 +358,11 @@ class AnalisadorLexico:
 
     def atualizar_mapeamento(self, mapeamento: dict[Estado, frozenset[Estado]]):
         """Atualiza mapeamento de estados para padrões após determinização.
-        
+
         Quando múltiplos AFDs são unidos e determinizados, estados podem representar
         múltiplos padrões. Esta função resolve conflitos usando ordem de prioridade
         (primeira definição no arquivo tem prioridade).
-        
+
         Args:
             mapeamento: Dicionário mapeando estados determinizados aos conjuntos
                        de estados originais que representam.
@@ -395,7 +399,7 @@ class AnalisadorLexico:
 
     def visualizar_automato(self):
         """Exibe tabela de transições do autômato unificado.
-        
+
         Imprime tabela formatada mostrando todos os estados, transições e
         marcadores para estado inicial (→) e estados finais (*).
         """
