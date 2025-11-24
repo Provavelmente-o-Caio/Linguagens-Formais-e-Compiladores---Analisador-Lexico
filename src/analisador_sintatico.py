@@ -31,6 +31,7 @@ class AnalisadorSintatico:
         """
         self.gramatica: Gramatica | None = None
         self._handler: HandlerGramatica | None = None
+        self.arquivo_tokens: str | None = None
 
     def ler_gramatica(self, arquivo: str):
         """Lê gramática livre de contexto de um arquivo.
@@ -340,7 +341,7 @@ class AnalisadorSintatico:
         
         return tokens
 
-    def analisar(self, arquivo_tokens: str) -> bool:
+    def analisar(self, arquivo_tokens: str, completo: bool = False) -> bool:
         """Executa análise sintática completa a partir de arquivo de tokens.
 
         Args:
@@ -366,11 +367,14 @@ class AnalisadorSintatico:
         parser = ParserSLR(tabela, self.gramatica, analisador_slr.producao_inicial)
         resultado = parser.parsear(tokens)
         
-        if resultado:
+        if resultado and not completo:
             print("SENTENÇA ACEITA!")
             parser.imprimir_derivacao()
-        else:
+        elif not resultado:
             print("ERRO SINTÁTICO!")
+
+        if completo:
+            return resultado, handler, analisador_slr, parser 
 
         return resultado
 

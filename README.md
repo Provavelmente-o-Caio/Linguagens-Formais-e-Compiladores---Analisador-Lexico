@@ -18,6 +18,8 @@
 - Os autômatos finitos gerados pela conversão das ERs também devem poder ser visualisados (arquivo ou tela - na forma de tabela).
 
 ## HowTo
+### Executando o código
+
 1. No diretório do projeto, para executar a interface CLI, será necessário ter a lib rich instalado, para isso podemos utilizar um virtualenv e instalar a lib de forma descartável com o seguinte comando:
    ```bash
     python3 -m venv env

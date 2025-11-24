@@ -27,7 +27,7 @@ class AnalisadorLexico:
         self.automato_unificado: Automato | None = None
         self.mapa_estados_padroes: dict[Estado, str] = {}
         self.entrada_texto: list[str] = []
-        self.arquivo_saida: str | None = None
+        self.arquivo_tokens: str | None = None
         self.ultima_lista_tokens: list[tuple[str, str]] = []
 
     def ler_grupos(self, expressao: str) -> str:
@@ -294,10 +294,6 @@ class AnalisadorLexico:
 
         Tokeniza cada palavra do arquivo usando o autômato unificado.
         Linhas começando com # ou vazias são ignoradas.
-
-        Args:
-            arquivo: Caminho do arquivo fonte a ser analisado.
-            arquivo_saida: Caminho opcional para salvar tokens gerados.
 
         Returns:
             Lista de tuplas (lexema, padrão) ou (lexema, "erro!") para tokens inválidos.

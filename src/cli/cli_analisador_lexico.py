@@ -1,14 +1,102 @@
 from rich.console import Console
+from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.table import Table
-from rich.panel import Panel
+
 from src.expressaoregular import ExpressaoRegular
 from src.automatos import HandlerAutomatos
+from .utils import selecionar_arquivo_entrada, selecionar_arquivo_saida, selecionar_arquivo_definicao
+
 
 console = Console()
 handler = HandlerAutomatos()
 
-def tela_projeto(analisador):
+
+def interface_lexico_execucao(analisador):
+    while True:
+        console.clear()
+        console.print(
+            Panel("[bold bright_cyan]Execução do Analisador[/bold bright_cyan]")
+        )
+
+        table = Table(show_header=False, box=None)
+        table.add_column("Opção", justify="center", width=6)
+        table.add_column("Descrição")
+
+        table.add_row("1", "Carregar arquivo de entrada")
+        table.add_row("2", "Analisar texto carregado")
+        table.add_row("3", "Listar tokens gerados")
+        table.add_row("4", "Exportar tokens para arquivo de saída")
+        table.add_row("0", "Voltar")
+
+        console.print(table)
+        op = Prompt.ask("\nSelecione", choices=["0", "1", "2", "3", "4"], default="0")
+
+        if op == "1":
+            selecionar_arquivo_entrada(analisador)
+        elif op == "2":
+            if not getattr(analisador, "entrada_texto", None):
+                console.print(
+                    "[yellow]Nenhum texto carregado. Carregue um arquivo primeiro.[/yellow]"
+                )
+                input("ENTER para continuar...")
+                continue
+            if not analisador.automato_unificado:
+                console.print(
+                    "[red]Analisador não gerado. Gere o analisador léxico primeiro.[/red]"
+                )
+                input("ENTER para continuar...")
+                continue
+            try:
+                tokens = analisador.analisar()
+                analisador.ultima_lista_tokens = tokens
+                console.print(
+                    f"[green]Análise concluída! {len(tokens)} tokens gerados.[/green]"
+                )
+            except Exception as e:
+                console.print(f"[red]Erro durante a análise: {e}[/red]")
+            input("ENTER para continuar...")
+        elif op == "3":
+            tokens = getattr(analisador, "ultima_lista_tokens", None)
+            if not tokens:
+                console.print(
+                    "[yellow]Nenhuma lista de tokens disponível. Execute a análise primeiro.[/yellow]"
+                )
+            else:
+                table = Table(title="Tokens Encontrados", show_header=True)
+                table.add_column("Lexema")
+                table.add_column("Padrão / Observação")
+                for lex, pad in tokens:
+                    table.add_row(str(lex), str(pad))
+                console.print(table)
+            input("ENTER para continuar...")
+        elif op == "4":
+            tokens = getattr(analisador, "ultima_lista_tokens", None)
+            if not tokens:
+                console.print("[yellow]Nenhuma lista de tokens para exportar.[/yellow]")
+                input("ENTER para continuar...")
+                continue
+
+            output_path = analisador.arquivo_tokens
+            if not output_path:
+                selecionar_arquivo_saida(analisador)
+                output_path = analisador.arquivo_tokens
+
+            try:
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+
+                with output_path.open("w", encoding="utf-8") as f:
+                    for token in tokens:
+                        f.write(f"<{token[0]}, {token[1]}>\n")
+                console.print(f"[green]Tokens exportados para {output_path}[/green]")
+            except Exception as e:
+                console.print(f"[red]Erro ao exportar: {e}[/red]")
+            input("ENTER para continuar...")
+        elif op == "0":
+            return
+
+
+def interface_lexico_projeto(analisador):
     while True:
         console.clear()
         console.print(Panel("[bold cyan]Projeto do Analisador[/bold cyan]"))
@@ -18,51 +106,58 @@ def tela_projeto(analisador):
         table.add_column("Descrição")
 
         table.add_row("", "[bold cyan]Definições[/bold cyan]")
-        table.add_row("1", "Listar definições")
-        table.add_row("2", "Adicionar expressão regular")
-        table.add_row("3", "[bold]Gerar analisador léxico[/bold]")
+        table.add_row("1", "Carregar arquivo de definições")
+        table.add_row("2", "Listar definições")
+        table.add_row("3", "Adicionar expressão regular")
+        table.add_row("4", "[bold]Gerar analisador léxico[/bold]")
         table.add_row("", "")
         table.add_row("", "[bold cyan]Execução em Passos[/bold cyan]")
-        table.add_row("4", "Gerar AFDs (para todas as ERs)")
-        table.add_row("5", "Minimizar AFDs")
-        table.add_row("6", "Unir AFDs via ε")
-        table.add_row("7", "Determinizar (autômato unido)")
+        table.add_row("5", "Gerar AFDs (para todas as ERs)")
+        table.add_row("6", "Minimizar AFDs")
+        table.add_row("7", "Unir AFDs via ε")
+        table.add_row("8", "Determinizar (autômato unido)")
         table.add_row("", "")
         table.add_row("", "[bold cyan]Tabelas[/bold cyan]")
-        table.add_row("8", "Visualizar tabelas de transição")
+        table.add_row("9", "Visualizar tabelas de transição")
         table.add_row("", "")
         table.add_row("[red]0[/red]", "Voltar")
 
         console.print(table)
 
-        op = Prompt.ask("\nSelecione", choices=[str(i) for i in range(0,9)], default="0")
+        op = Prompt.ask(
+            "\nSelecione", choices=[str(i) for i in range(0, 10)], default="0"
+        )
 
         if op == "1":
+            selecionar_arquivo_definicao(analisador)
+        elif op == "2":
             if not analisador.definicoes:
                 console.print("[yellow]Nenhuma definição cadastrada.[/yellow]")
             else:
-                table = Table(title="Definições", show_header=True, header_style="bold magenta")
+                table = Table(
+                    title="Definições", show_header=True, header_style="bold magenta"
+                )
                 table.add_column("Nome")
                 table.add_column("Expressão Regular")
                 for nome, er in analisador.definicoes.items():
                     table.add_row(nome, er)
                 console.print(table)
             input("ENTER para continuar...")
-        elif op == "2":
+        elif op == "3":
             nome = Prompt.ask("Nome da definição (ex: id)")
             er = Prompt.ask("Expressão regular (use [a-zA-Z], *, +, ?, |, & para ε)")
             analisador.definicoes[nome] = er
             console.print(f"[green]ER '{nome}' adicionada![/green]")
             input("ENTER para continuar...")
-        elif op == "3":
+        elif op == "4":
             try:
                 analisador.gerar_analisador()
                 console.print("[green]Analisador léxico gerado com sucesso![/green]")
             except Exception as e:
                 console.print(f"[red]Erro ao gerar analisador: {e}[/red]")
             input("ENTER para continuar...")
-        
-        elif op == "4":
+
+        elif op == "5":
             if not analisador.definicoes:
                 console.print("[red]Não há definições para gerar AFDs.[/red]")
             else:
@@ -76,7 +171,7 @@ def tela_projeto(analisador):
                     except Exception as e:
                         console.print(f"[red]Erro gerando AFD para {nome}: {e}[/red]")
             input("ENTER para continuar...")
-        elif op == "5":
+        elif op == "6":
             if getattr(analisador, "afds", None):
                 analisador.afds_min = {}
                 for nome, afd in analisador.afds.items():
@@ -89,11 +184,15 @@ def tela_projeto(analisador):
             else:
                 console.print("[yellow]Primeiro gere os AFDs (opção 4).[/yellow]")
             input("ENTER para continuar...")
-        elif op == "6":
+        elif op == "7":
             # unir todos AFDs (se existirem) criando um AFN via ε
-            afds = getattr(analisador, "afds_min", None) or getattr(analisador, "afds", None)
+            afds = getattr(analisador, "afds_min", None) or getattr(
+                analisador, "afds", None
+            )
             if not afds:
-                console.print("[yellow]Nenhum AFD disponível para unir. Gere AFDs primeiro.[/yellow]")
+                console.print(
+                    "[yellow]Nenhum AFD disponível para unir. Gere AFDs primeiro.[/yellow]"
+                )
                 input("ENTER para continuar...")
                 continue
             try:
@@ -106,18 +205,20 @@ def tela_projeto(analisador):
             except Exception as e:
                 console.print(f"[red]Erro ao unir autômatos: {e}[/red]")
             input("ENTER para continuar...")
-        elif op == "7":
+        elif op == "8":
             if not getattr(analisador, "afn_unido", None):
                 console.print("[yellow]Primeiro una os autômatos (opção 6).[/yellow]")
             else:
                 try:
                     afd_unido = handler.determinizar(analisador.afn_unido)
                     analisador.afd_unido = afd_unido
-                    console.print("[green]Determinização realizada com sucesso.[/green]")
+                    console.print(
+                        "[green]Determinização realizada com sucesso.[/green]"
+                    )
                 except Exception as e:
                     console.print(f"[red]Erro ao determinizar: {e}[/red]")
             input("ENTER para continuar...")
-        elif op == "8":
+        elif op == "9":
             # imprime tabelas existentes: AFDs individuais e o unido/determinizado
             from rich.box import SQUARE
 
@@ -128,9 +229,9 @@ def tela_projeto(analisador):
                         title=f"Tabela de Transição — {nome}",
                         box=SQUARE,
                         header_style="bold magenta",
-                        expand=True
+                        expand=True,
                     )
-                    
+
                     # Cabeçalho: Estado + cada símbolo
                     table.add_column("Estado", justify="center", style="bold")
 
@@ -144,7 +245,6 @@ def tela_projeto(analisador):
 
                     # Montar linhas
                     for estado in estados_ord:
-
                         marcador = ""
                         if estado == afd.estado_inicial:
                             marcador += "→ "
@@ -158,7 +258,9 @@ def tela_projeto(analisador):
                         for s in simbolos_ord:
                             destinos = afd.transicoes.get((estado, s), set())
                             if destinos:
-                                destinos_str = ", ".join(sorted(d.nome for d in destinos))
+                                destinos_str = ", ".join(
+                                    sorted(d.nome for d in destinos)
+                                )
                                 linha.append(destinos_str)
                             else:
                                 linha.append("-")
@@ -175,7 +277,7 @@ def tela_projeto(analisador):
                     title="Tabela de Transição — AFD Unificado",
                     box=SQUARE,
                     header_style="bold magenta",
-                    expand=True
+                    expand=True,
                 )
 
                 table.add_column("Estado", justify="center", style="bold")
@@ -216,7 +318,7 @@ def tela_projeto(analisador):
                     title="Tabela de Transição — AFD Unificado",
                     box=SQUARE,
                     header_style="bold magenta",
-                    expand=True
+                    expand=True,
                 )
 
                 table.add_column("Estado", justify="center", style="bold")
