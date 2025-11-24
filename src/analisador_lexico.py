@@ -3,7 +3,7 @@ import time
 
 from src.automatos import Automato, Estado, HandlerAutomatos
 from src.conversorER import ConversorER_AFD
-from src.expressaoregular import ExpressaoRegular, substituir_operadores_multicaracteres
+from src.expressaoregular import ExpressaoRegular
 
 
 class AnalisadorLexico:
@@ -329,7 +329,6 @@ class AnalisadorLexico:
         Returns:
             Tupla (lexema, padrão) se reconhecido, ou (lexema, "erro!") caso contrário.
         """
-        palavra = substituir_operadores_multicaracteres(palavra)
         estado_atual = self.automato_unificado.estado_inicial
 
         ultimo_estado_final = None

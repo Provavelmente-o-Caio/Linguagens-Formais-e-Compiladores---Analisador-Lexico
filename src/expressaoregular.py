@@ -161,7 +161,7 @@ class ExpressaoRegular:
             expressao: String contendo a expressão regular.
         """
         # Adiciona concatenação explícita com # para marcar fim da expressão
-        expressao = substituir_operadores_multicaracteres(expressao)
+        expressao = expressao
         self.expressao: list[str] = list(f"({self.formatar_expressao(expressao)}).#")
         self.posicao: int = 1
         self.folhas: dict[int, NodoER] = {}
@@ -316,13 +316,11 @@ class ExpressaoRegular:
             raise ValueError(f"Operador '{atual}' sem operando à esquerda")
 
         if atual == "(":
-            print("entrou parênteses")
             _ = self.consume("(")
             nodo = self.parse()
             if self.olhar() != ")":
                 raise ValueError(f"Esperado ')', obtido: {self.olhar()}")
             _ = self.consume(")")
-            print("saiu parênteses")
             return nodo
 
         if atual == "\\":
@@ -332,7 +330,6 @@ class ExpressaoRegular:
             nodo: NodoER = NodoER("SIMBOLO", token, self.posicao)
             self.folhas[self.posicao] = nodo
             self.posicao += 1
-            print("token: ", token)
             return nodo
 
         # Qualquer outro símbolo (incluindo '#' de fim) é tratado como SIMBOLO
@@ -341,7 +338,6 @@ class ExpressaoRegular:
         nodo: NodoER = NodoER("SIMBOLO", token, self.posicao)
         self.folhas[self.posicao] = nodo
         self.posicao += 1
-        print("token: ", token)
         return nodo
 
     def consume(self, esperado: str | None) -> str:
@@ -456,15 +452,3 @@ class ExpressaoRegular:
         self.calcular_followpos(raiz)
 
         return raiz
-
-
-def substituir_operadores_multicaracteres(expressao: str):
-    # substitui multi-caracter
-    for op in sorted(MAPA_OPERADORES, key=len, reverse=True):
-        expressao = expressao.replace(op, MAPA_OPERADORES[op])
-
-    # substitui unitários APENAS se expressão for exatamente o operador
-    if expressao in OPERADORES_UNITARIOS:
-        return OPERADORES_UNITARIOS[expressao]
-
-    return expressao

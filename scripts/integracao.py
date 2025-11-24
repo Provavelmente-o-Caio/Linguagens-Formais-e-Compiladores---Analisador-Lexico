@@ -7,9 +7,9 @@ from src.analisador_sintatico import AnalisadorSintatico
 
 def main():
     # Arquivos de entrada
-    arquivo_definicoes = "./tests/integracao/definicao_simples.txt"
-    arquivo_gramatica = "./tests/integracao/gramatica_simples.txt"
-    arquivo_fonte = "./tests/integracao/fonte_simples.txt"
+    arquivo_definicoes = "./tests/integracao/definicao_com_dot.txt"
+    arquivo_gramatica = "./tests/integracao/gramatica_com_dot.txt"
+    arquivo_fonte = "./tests/integracao/fonte_com_dot.txt"
     arquivo_tokens = "./tests/integracao/tokens_saida.txt"
     
     print("\n[FASE 1] ANÁLISE LÉXICA")
