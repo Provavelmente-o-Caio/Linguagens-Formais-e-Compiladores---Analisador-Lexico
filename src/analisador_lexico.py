@@ -7,14 +7,27 @@ from src.expressaoregular import ExpressaoRegular
 
 
 class AnalisadorLexico:
+    """Analisador léxico baseado em autômatos finitos determinísticos.
+
+    Implementa um lexer completo que converte definições regulares em AFDs,
+    unifica múltiplos AFDs e realiza análise léxica de código fonte.
+
+    Referência: Aho et al. (2006), Capítulo 3, Seção 3.8, pp. 109-198.
+    """
+
     def __init__(self):
+        """Inicializa o analisador léxico com estruturas vazias.
+
+        Inicializa conversor de ER para AFD, handler de autômatos, dicionário de
+        definições regulares e estruturas para o autômato unificado.
+        """
         self.conversor: ConversorER_AFD = ConversorER_AFD()
         self.handler_automatos: HandlerAutomatos = HandlerAutomatos()
         self.definicoes: dict[str, str] = {}
         self.automato_unificado: Automato | None = None
         self.mapa_estados_padroes: dict[Estado, str] = {}
         self.entrada_texto: list[str] = []
-        self.arquivo_saida: str | None = None
+        self.arquivo_tokens: str | None = None
         self.ultima_lista_tokens: list[tuple[str, str]] = []
 
     def ler_grupos(self, expressao: str) -> str:
@@ -29,6 +42,17 @@ class AnalisadorLexico:
         return resultado
 
     def expandir_match(self, match):
+        """Expande um grupo de caracteres em uma expressão de união.
+
+        Args:
+            match: Objeto Match do regex contendo o grupo capturado.
+
+        Returns:
+            String com união explícita: "(a|b|c|...)".
+
+        Raises:
+            ValueError: Se o grupo estiver vazio ou for inválido.
+        """
         conteudo = match.group(1)
         caracteres = self.processar_grupos(conteudo)
 
@@ -39,6 +63,19 @@ class AnalisadorLexico:
         return f"({('|'.join(caracteres))})"
 
     def processar_grupos(self, conteudo: str) -> list[str]:
+        """Processa conteúdo de um grupo expandindo ranges de caracteres.
+
+        Suporta ranges como a-z, A-Z, 0-9 e caracteres individuais.
+
+        Args:
+            conteudo: String contendo o conteúdo interno do grupo.
+
+        Returns:
+            Lista de caracteres individuais expandidos.
+
+        Raises:
+            ValueError: Se encontrar range inválido.
+        """
         caracteres = []
         i = 0
 
@@ -59,6 +96,21 @@ class AnalisadorLexico:
         return caracteres
 
     def expandir_caracter(self, inicio: str, fim: str) -> list[str]:
+        """Expande um range de caracteres (ex: a-z) em lista de caracteres.
+
+        Valida que início e fim sejam do mesmo tipo (letra ou dígito) e que
+        o início venha antes do fim na ordenação.
+
+        Args:
+            inicio: Caractere inicial do range.
+            fim: Caractere final do range.
+
+        Returns:
+            Lista com todos os caracteres do range [início, fim].
+
+        Raises:
+            ValueError: Se o range for inválido (tipos incompatíveis ou ordem incorreta).
+        """
         inicio_letra = inicio.isalpha()
         fim_letra = fim.isalpha()
         inicio_digito = inicio.isdigit()
@@ -95,11 +147,25 @@ class AnalisadorLexico:
         return [chr(i) for i in range(ord(inicio), ord(fim) + 1)]
 
     def ler_definicoes(self, arquivo: str):
+        """Lê definições regulares de um arquivo.
+
+        Formato esperado: nome:expressao_regular
+        Linhas começando com # são tratadas como comentários.
+
+        Args:
+            arquivo: Caminho do arquivo de definições.
+
+        Raises:
+            ValueError: Se encontrar linha com formato inválido.
+        """
         with open(arquivo, "r") as f:
             for num_linha, linha in enumerate(f, 1):
                 linha = linha.strip()
                 # comentários
                 if linha.startswith("#"):
+                    continue
+
+                if linha == (""):
                     continue
 
                 if ":" not in linha:
@@ -108,7 +174,7 @@ class AnalisadorLexico:
                         f"Esperava 'nome:expressao', obteve: {linha}"
                     )
 
-                nome, er = linha.split(":")
+                nome, er = linha.split(":", 1)
                 nome = nome.strip()
                 er = er.strip()
 
@@ -129,15 +195,24 @@ class AnalisadorLexico:
                 print(f"Nova definição: {nome} = {er}")
 
     def gerar_analisador(self):
-        """
-        Gerar um autômato unificado a partir das definições
+        """Gera autômato unificado a partir das definições regulares.
+
+        Processo:
+        1. Converte cada ER em AFD
+        2. Minimiza cada AFD
+        3. Une todos os AFDs via ε-transições
+        4. Determiniza o autômato unificado
+        5. Mapeia estados finais aos seus padrões/tokens
+
+        Raises:
+            ValueError: Se nenhuma definição foi adicionada ou se ocorrer erro na conversão.
         """
         if not self.definicoes:
             raise ValueError("Nenhuma definição foi adicionada")
 
         afds_minimizados: list[Automato] = []
 
-        for idx, (nome, expressao) in enumerate(self.definicoes.items()):
+        for nome, expressao in self.definicoes.items():
             print(f"usando a definição de {nome}: {expressao}")
 
             try:
@@ -181,6 +256,17 @@ class AnalisadorLexico:
         self.automato_unificado = automato_unido
 
     def renomear_estados_afd(self, afd: Automato, prefixo: str) -> Automato:
+        """Renomeia todos os estados de um AFD adicionando um prefixo.
+
+        Útil para evitar conflitos de nomes ao unir múltiplos autômatos.
+
+        Args:
+            afd: Autômato finito determinístico.
+            prefixo: String a ser adicionada antes de cada nome de estado.
+
+        Returns:
+            Novo autômato com estados renomeados.
+        """
         # Criar mapeamento de estados antigos para novos
         mapeamento = {}
         for estado in afd.estados:
@@ -204,6 +290,14 @@ class AnalisadorLexico:
         )
 
     def analisar(self) -> list[tuple[str, str]]:
+        """Realiza análise léxica de um arquivo fonte.
+
+        Tokeniza cada palavra do arquivo usando o autômato unificado.
+        Linhas começando com # ou vazias são ignoradas.
+
+        Returns:
+            Lista de tuplas (lexema, padrão) ou (lexema, "erro!") para tokens inválidos.
+        """
         tokens: list[tuple[str, str]] = []
         for num_linha, linha in enumerate(self.entrada_texto, 1):
             linha = linha.strip()
@@ -221,6 +315,16 @@ class AnalisadorLexico:
         return tokens
 
     def tokenizar(self, palavra: str):
+        """Tokeniza uma palavra usando o autômato unificado.
+
+        Implementa longest match: consome o maior prefixo válido da palavra.
+
+        Args:
+            palavra: String a ser tokenizada.
+
+        Returns:
+            Tupla (lexema, padrão) se reconhecido, ou (lexema, "erro!") caso contrário.
+        """
         estado_atual = self.automato_unificado.estado_inicial
 
         ultimo_estado_final = None
@@ -248,6 +352,16 @@ class AnalisadorLexico:
             return palavra, "erro!"
 
     def atualizar_mapeamento(self, mapeamento: dict[Estado, frozenset[Estado]]):
+        """Atualiza mapeamento de estados para padrões após determinização.
+
+        Quando múltiplos AFDs são unidos e determinizados, estados podem representar
+        múltiplos padrões. Esta função resolve conflitos usando ordem de prioridade
+        (primeira definição no arquivo tem prioridade).
+
+        Args:
+            mapeamento: Dicionário mapeando estados determinizados aos conjuntos
+                       de estados originais que representam.
+        """
         novo_mapa = {}
 
         for estado_determinizado, conjunto_original in mapeamento.items():
@@ -278,7 +392,28 @@ class AnalisadorLexico:
 
         self.mapa_estados_padroes = novo_mapa
 
+    def salvar_tokens(self, tokens: list[tuple[str, str]], arquivo_saida: str):
+        """Salva lista de tokens em arquivo.
+        
+        Formato de saída: uma linha por token
+        <lexema, tipo>
+        
+        Args:
+            tokens: Lista de tuplas (lexema, tipo)
+            arquivo_saida: Caminho do arquivo de saída
+        """
+        with open(arquivo_saida, 'w') as f:
+            for lexema, tipo in tokens:
+                f.write(f"<{lexema}, {tipo}>\n")
+        
+        print(f"Tokens salvos em '{arquivo_saida}'")
+
     def visualizar_automato(self):
+        """Exibe tabela de transições do autômato unificado.
+
+        Imprime tabela formatada mostrando todos os estados, transições e
+        marcadores para estado inicial (→) e estados finais (*).
+        """
         if not self.automato_unificado:
             print("Nenhum automato foi gerado")
             return
