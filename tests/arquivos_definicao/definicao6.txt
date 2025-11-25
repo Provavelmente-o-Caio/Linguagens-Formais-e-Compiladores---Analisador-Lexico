@@ -1,0 +1,9 @@
+if: if
+then: then
+else: else
+end: end
+print: print
+id: [a-zA-Z]+
+num: [0-9]+
+=: \=
+;: \;

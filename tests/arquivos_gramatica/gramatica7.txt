@@ -1,0 +1,4 @@
+<lista> ::= [ <elementos> ]
+<lista> ::= [ ]
+<elementos> ::= num
+<elementos> ::= num , <elementos>
