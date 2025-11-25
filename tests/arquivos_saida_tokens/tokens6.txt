@@ -1,0 +1,7 @@
+<if, if>
+<x, id>
+<then, then>
+<print, print>
+<y, id>
+<;, ;>
+<end, end>

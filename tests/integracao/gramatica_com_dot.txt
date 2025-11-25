@@ -1,6 +1,0 @@
-<Programa> ::= <S>
-<Programa> ::= <S> <Programa>
-<S> ::= <T> . <T>
-<S> ::= <E> . <E>
-<E> ::= id
-<T> ::= num

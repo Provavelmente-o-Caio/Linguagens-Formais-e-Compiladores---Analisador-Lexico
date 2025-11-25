@@ -1,0 +1,11 @@
+<prog> ::= <stmt>
+<stmt> ::= <ifstmt>
+<stmt> ::= <printstmt>
+<stmt> ::= <assignstmt>
+<ifstmt> ::= if <cond> then <stmt> end
+<ifstmt> ::= if <cond> then <stmt> else <stmt> end
+<printstmt> ::= print id ;
+<assignstmt> ::= id = <expr> ;
+<expr> ::= num
+<expr> ::= id
+<cond> ::= id

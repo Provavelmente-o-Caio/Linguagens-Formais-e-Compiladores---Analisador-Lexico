@@ -6,11 +6,12 @@ from src.analisador_sintatico import AnalisadorSintatico
 
 
 def main():
-    # Arquivos de entrada
-    arquivo_definicoes = "./tests/integracao/definicao_com_dot.txt"
-    arquivo_gramatica = "./tests/integracao/gramatica_com_dot.txt"
-    arquivo_fonte = "./tests/integracao/fonte_com_dot.txt"
-    arquivo_tokens = "./tests/integracao/tokens_saida.txt"
+    conjunto_testes = sys.argv[1] if len(sys.argv) > 1 else 1
+    # Arquivos de entrada (usando nomenclatura numerada)
+    arquivo_definicoes = f"./tests/arquivos_definicao/definicao{conjunto_testes}.txt"
+    arquivo_gramatica = f"./tests/arquivos_gramatica/gramatica{conjunto_testes}.txt"
+    arquivo_fonte = f"./tests/arquivos_entrada/fonte{conjunto_testes}.txt"
+    arquivo_tokens = f"./tests/arquivos_saida_tokens/tokens{conjunto_testes}.txt"
     
     print("\n[FASE 1] ANÁLISE LÉXICA")
     lexico = AnalisadorLexico()
