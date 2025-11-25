@@ -10,11 +10,6 @@ from .cli_analisador_sintatico import (
     interface_sintatico_projeto,
     interface_sintatico_execucao,
 )
-from .utils import (
-    selecionar_arquivo_definicao,
-    selecionar_arquivo_entrada,
-    selecionar_arquivo_saida,
-)
 
 console = Console()
 
