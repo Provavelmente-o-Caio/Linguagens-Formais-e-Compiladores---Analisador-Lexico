@@ -1,7 +1,7 @@
 import re
 import time
 
-from src.automatos import Automato, Estado, HandlerAutomatos
+from automatos import Automato, Estado, HandlerAutomatos
 from src.conversorER import ConversorER_AFD
 from src.expressaoregular import ExpressaoRegular
 

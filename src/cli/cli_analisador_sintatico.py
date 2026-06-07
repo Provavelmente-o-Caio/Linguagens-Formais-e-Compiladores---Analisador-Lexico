@@ -3,7 +3,7 @@ from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.table import Table
 
-from src.automatos import HandlerAutomatos
+from automatos import HandlerAutomatos
 from .utils import (
     selecionar_arquivo_gramatica,
     selecionar_arquivo_saida,

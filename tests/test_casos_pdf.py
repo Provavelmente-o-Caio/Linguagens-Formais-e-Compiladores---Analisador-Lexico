@@ -1,5 +1,5 @@
 import pytest
-from src.automatos import Estado, Automato, HandlerAutomatos
+from automatos import Estado, Automato, HandlerAutomatos
 
 
 # ===========================================================

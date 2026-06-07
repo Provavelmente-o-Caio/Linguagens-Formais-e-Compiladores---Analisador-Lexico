@@ -1,5 +1,5 @@
 from src.expressaoregular import NodoER, ExpressaoRegular
-from src.automatos import Automato, Estado
+from automatos import Automato, Estado
 
 EPSILON = "&"
 

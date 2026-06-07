@@ -4,7 +4,7 @@ from rich.prompt import Prompt
 from rich.table import Table
 
 from src.expressaoregular import ExpressaoRegular
-from src.automatos import HandlerAutomatos
+from automatos import HandlerAutomatos
 from .utils import selecionar_arquivo_entrada, selecionar_arquivo_saida, selecionar_arquivo_definicao
 
 

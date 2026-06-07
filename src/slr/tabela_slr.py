@@ -1,6 +1,8 @@
-from typing import Dict, List, FrozenSet, Tuple
-from src.gramaticas import Terminal, NaoTerminal, Producao, HandlerGramatica
-from .acoes import Acao, Shift, Reduce, Accept, ConflitoError
+from typing import Dict, FrozenSet, List, Tuple
+
+from src.gramaticas import HandlerGramatica, NaoTerminal, Producao, Terminal
+
+from .acoes import Acao, Accept, ConflitoError, Reduce, Shift
 from .item_lr import ItemLR
 
 

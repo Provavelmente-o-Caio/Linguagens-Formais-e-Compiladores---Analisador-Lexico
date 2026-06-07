@@ -1,7 +1,7 @@
 # Linguagens-Formais-e-Compiladores---Analisador-Lexico
 
 ## Requisitos
-- [ ] Conversão de expressão regular para autômato finito determinístico (Algoritmo apresentado no livro de Aho).
+- [x] Conversão de expressão regular para autômato finito determinístico (Algoritmo apresentado no livro de Aho).
 - [x] Minimização de autômatos.
 - [x] União de Autômatos via epsilon-transição.
 - [x] Determinação de Autômatos.

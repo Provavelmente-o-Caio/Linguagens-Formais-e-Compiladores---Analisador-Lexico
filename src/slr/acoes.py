@@ -5,11 +5,12 @@ from typing import Union
 @dataclass(frozen=True)
 class Shift:
     """Ação shift: empilha estado e avança para próximo símbolo.
-    
+
     ACTION[i, a] = shift j
     """
+
     estado: int
-    
+
     def __str__(self) -> str:
         return f"s{self.estado}"
 
@@ -17,11 +18,12 @@ class Shift:
 @dataclass(frozen=True)
 class Reduce:
     """Ação reduce: reduz usando uma produção da gramática.
-    
+
     ACTION[i, a] = reduce A::=β
     """
+
     producao: int  # Número da produção
-    
+
     def __str__(self) -> str:
         return f"r{self.producao}"
 
@@ -29,10 +31,10 @@ class Reduce:
 @dataclass(frozen=True)
 class Accept:
     """Ação accept: aceita a entrada.
-    
+
     ACTION[i, $] = accept
     """
-    
+
     def __str__(self) -> str:
         return "acc"
 
@@ -43,10 +45,13 @@ Acao = Union[Shift, Reduce, Accept]
 
 class ConflitoError(Exception):
     """Exceção lançada quando há conflito shift-reduce ou reduce-reduce na tabela SLR."""
+
     def __init__(self, estado: int, simbolo, acao_anterior: str, nova_acao: str):
         self.estado = estado
         self.simbolo = simbolo
         self.acao_anterior = acao_anterior
         self.nova_acao = nova_acao
-        mensagem = f"CONFLITO em ACTION[{estado}, {simbolo}]: {acao_anterior} vs {nova_acao}"
+        mensagem = (
+            f"CONFLITO em ACTION[{estado}, {simbolo}]: {acao_anterior} vs {nova_acao}"
+        )
         super().__init__(mensagem)

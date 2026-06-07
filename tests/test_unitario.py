@@ -1,4 +1,4 @@
-from src.automatos import Estado, Automato, HandlerAutomatos, EPSILON
+from automatos import Estado, Automato, HandlerAutomatos, EPSILON
 
 # =====================================================
 # Testes básicos do comportamento do autômato
