@@ -1,6 +1,5 @@
-from typing import List, Set
+from typing import List, Optional, Set
 
-from src.expressaoregular import MAPA_OPERADORES, OPERADORES_UNITARIOS
 from src.gramaticas import (
     EPSILON,
     NAO_TERMINAL_ESCAPE,
@@ -10,31 +9,13 @@ from src.gramaticas import (
     Producao,
     Terminal,
 )
-from src.ll.analisador_ll1 import AnalisadorLL1
-from src.ll.parser_ll1 import ParserLL1
-from src.slr import AnalisadorSLR, ParserSLR
-from src.tabela_simbolos import CategoriaLexica, TabelaSimbolos
 
 
-class AnalisadorSintatico:
-    """Analisador sintático SLR (Simple LR).
-
-    Implementa gerador de analisadores sintáticos do tipo SLR a partir de
-    gramáticas livres de contexto. Constrói tabelas ACTION e GOTO para
-    parsing bottom-up.
-
-    Referência: Aho et al. (2006), Seção 4.7, Algoritmo 4.46, pp. 253-271.
-    """
-
+class AnalisadorSintaticoLL1:
     def __init__(self):
-        """Inicializa o analisador sintático com estruturas vazias.
-
-        O analisador usa um objeto Gramatica para encapsular todos os
-        componentes da gramática (produções, símbolos, etc.).
-        """
-        self.gramatica: Gramatica | None = None
-        self._handler: HandlerGramatica | None = None
-        self.arquivo_tokens: str | None = None
+        self.gramatica: Optional[Gramatica] = None
+        self._handler: Optional[HandlerGramatica] = None
+        self.arquivo_tokens: Optional[str] = None
 
     def ler_gramatica(self, arquivo: str):
         """Lê gramática livre de contexto de um arquivo.
@@ -342,66 +323,6 @@ class AnalisadorSintatico:
         return tokens
 
     def analisar(self, arquivo_tokens: str, completo: bool = False) -> bool:
-        """Executa análise sintática completa a partir de arquivo de tokens.
-
-        Args:
-            arquivo_tokens: Caminho do arquivo com tokens (formato: <lexema, tipo>)
-
-        Returns:
-            True se sentença aceita, False se erro sintático
-        """
         self._criar_tabela_simbolos()
 
-        tokens = self._ler_tokens_arquivo(arquivo_tokens)
-        tokens = self._processar_tokens(tokens)
-
-        handler = self._obter_handler()
-        handler.calcular_firsts()
-        handler.calcular_follows()
-
-        # Construir coleção canônica e tabelas
-        analisador_slr = AnalisadorSLR(self.gramatica, handler)
-        analisador_slr.construir_colecao_canonica()
-        tabela = analisador_slr.construir_tabela()
-
-        parser = ParserSLR(tabela, self.gramatica, analisador_slr.producao_inicial)
-        resultado = parser.parsear(tokens)
-
-        if resultado and not completo:
-            print("SENTENÇA ACEITA!")
-            parser.imprimir_derivacao()
-        elif not resultado:
-            print("ERRO SINTÁTICO!")
-
-        if completo:
-            return resultado, handler, analisador_slr, parser
-
-        return resultado
-
-    def analisar_ll1(self, arquivo_tokens: str, completo: bool = False) -> bool:
-        self._criar_tabela_simbolos()
-
-        tokens = self._ler_tokens_arquivo(arquivo_tokens)
-        tokens = self._processar_tokens(tokens)
-
-        handler = self._obter_handler()
-        handler.calcular_firsts()
-        handler.calcular_follows()
-
-        if self.gramatica:
-            analisador_ll1 = AnalisadorLL1(self.gramatica, handler)
-            tabela = analisador_ll1.construir_tabela()
-
-            parser = ParserLL1(tabela, self.gramatica)
-            resultado = parser.parsear(tokens)
-
-            if resultado and not completo:
-                print("SENTENÇA ACEITA!")
-                parser.imprimir_derivacao()
-            elif not resultado:
-                print("ERRO SINTÁTICO!")
-
-            if completo:
-                return resultado, handler, analisador_ll1, parser
-
-            return resultado
+        tokens = self._ler_tokens_arquivo()

@@ -1,7 +1,7 @@
 import re
 import time
 
-from automatos import Automato, Estado, HandlerAutomatos
+from src.automatos import Automato, Estado, HandlerAutomatos
 from src.conversorER import ConversorER_AFD
 from src.expressaoregular import ExpressaoRegular
 
@@ -394,18 +394,18 @@ class AnalisadorLexico:
 
     def salvar_tokens(self, tokens: list[tuple[str, str]], arquivo_saida: str):
         """Salva lista de tokens em arquivo.
-        
+
         Formato de saída: uma linha por token
         <lexema, tipo>
-        
+
         Args:
             tokens: Lista de tuplas (lexema, tipo)
             arquivo_saida: Caminho do arquivo de saída
         """
-        with open(arquivo_saida, 'w') as f:
+        with open(arquivo_saida, "w") as f:
             for lexema, tipo in tokens:
                 f.write(f"<{lexema}, {tipo}>\n")
-        
+
         print(f"Tokens salvos em '{arquivo_saida}'")
 
     def visualizar_automato(self):

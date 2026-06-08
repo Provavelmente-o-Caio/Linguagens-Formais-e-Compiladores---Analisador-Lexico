@@ -1,14 +1,15 @@
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
 from rich.prompt import Prompt
+from rich.table import Table
 
 from src.analisador_lexico import AnalisadorLexico
 from src.analisador_sintatico import AnalisadorSintatico
-from .cli_analisador_lexico import interface_lexico_projeto, interface_lexico_execucao
+
+from .cli_analisador_lexico import interface_lexico_execucao, interface_lexico_projeto
 from .cli_analisador_sintatico import (
-    interface_sintatico_projeto,
     interface_sintatico_execucao,
+    interface_sintatico_projeto,
 )
 
 console = Console()
@@ -104,7 +105,7 @@ def iniciar_cli():
         table.add_column("Descrição")
 
         table.add_row("1", "Gerador de Analisadores Léxicos")
-        table.add_row("2", "Gerador de Analisadores Sintáticos (SLR)")
+        table.add_row("2", "Gerador de Analisadores Sintáticos (LL(1))")
         table.add_row("0", "Sair")
 
         console.print(table)

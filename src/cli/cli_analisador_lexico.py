@@ -3,10 +3,14 @@ from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.table import Table
 
+from src.automatos import HandlerAutomatos
 from src.expressaoregular import ExpressaoRegular
-from automatos import HandlerAutomatos
-from .utils import selecionar_arquivo_entrada, selecionar_arquivo_saida, selecionar_arquivo_definicao
 
+from .utils import (
+    selecionar_arquivo_definicao,
+    selecionar_arquivo_entrada,
+    selecionar_arquivo_saida,
+)
 
 console = Console()
 handler = HandlerAutomatos()

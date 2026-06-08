@@ -3,15 +3,15 @@ from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.table import Table
 
-from automatos import HandlerAutomatos
+from src.automatos import HandlerAutomatos
+
 from .utils import (
+    mostrar_gramatica,
+    mostrar_resultado_slr,
+    mostrar_tabela_simbolos,
     selecionar_arquivo_gramatica,
     selecionar_arquivo_saida,
-    mostrar_gramatica,
-    mostrar_tabela_simbolos,
-    mostrar_resultado_slr,
 )
-
 
 console = Console()
 handler = HandlerAutomatos()
@@ -83,13 +83,17 @@ def interface_sintatico_execucao(analisador_sintatico):
                 console.print("[red]Nenhuma gramática carregada![/red]")
                 input("ENTER para continuar...")
                 continue
-            resultado, handler, analisador_slr, parser = analisador_sintatico.analisar(
-                analisador_sintatico.arquivo_tokens, completo=True
+            resultado, handler, analisador_slr, parser = (
+                analisador_sintatico.analisar_ll1(
+                    analisador_sintatico.arquivo_tokens, completo=True
+                )
             )
             mostrar_resultado_slr(handler, analisador_slr, parser, resultado)
         elif escolha == "3":
             if not getattr(analisador_sintatico, "tabela_simbolos", None):
-                console.print("[red]Tabela de símbolos ainda não foi gerada, execute o analisador sintático primeiro![/red]")
+                console.print(
+                    "[red]Tabela de símbolos ainda não foi gerada, execute o analisador sintático primeiro![/red]"
+                )
                 input("ENTER para continuar...")
                 continue
             mostrar_tabela_simbolos(analisador_sintatico.tabela_simbolos)
