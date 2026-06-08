@@ -15,7 +15,7 @@ class ParserLL1:
             Terminal("$"),
             self.gramatica.simbolo_inicial,
         ]
-        simbolo: list[Terminal | NaoTerminal] = []
+        simbolo_pilha: list[Terminal | NaoTerminal] = []
         entrada = [(lexema, tipo) for lexema, tipo in tokens]
         if not entrada or entrada[-1][1] not in ["$", "EOF"]:
             entrada.append(("$", "$"))  # Fim de entrada
@@ -55,7 +55,7 @@ class ParserLL1:
                     )
                     return False
 
-            if isinstance(topo, NaoTerminal):
+            elif isinstance(topo, NaoTerminal):
                 producao = self.tabela.consultar(topo, simbolo_atual)
 
                 if not producao:

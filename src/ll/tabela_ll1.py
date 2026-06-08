@@ -1,34 +1,44 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
-from src.gramaticas import (
-    HandlerGramatica,
-    NaoTerminal,
-    Producao,
-    Terminal,
-)
+from src.gramaticas import Epsilon, HandlerGramatica, NaoTerminal, Producao, Terminal
 from src.ll.acoes import ConflictErrorLL1
+
+_EPSILON = Epsilon()
 
 
 class TabelaLL1:
     def __init__(self):
         self.tabela: Dict[Tuple[NaoTerminal, Terminal], Producao] = {}
 
-    def construir(self, producoes: List[Producao], handler: HandlerGramatica) -> None:
-        fim_entrada = Terminal("$")
+    @staticmethod
+    def _first_sequencia(simbolos: Tuple, handler: HandlerGramatica) -> Set[Terminal]:
+        resultado: Set[Terminal] = set()
 
+        if not simbolos:
+            return {_EPSILON}
+
+        for simbolo in simbolos:
+            first_xi: Set[Terminal] = handler.get_first(simbolo)
+            resultado |= first_xi - {_EPSILON}
+            if _EPSILON not in first_xi:
+                return resultado  # este símbolo bloqueia ε
+
+        resultado.add(_EPSILON)  # toda a sequência deriva ε
+        return resultado
+
+    def construir(self, producoes: List[Producao], handler: HandlerGramatica) -> None:
         for producao in producoes:
             cabeca = producao.cabeca
             corpo = producao.corpo
 
             tem_epsilon = False
-            for simbolo in handler.get_first(corpo):
-                if isinstance(simbolo, Terminal) and simbolo.nome == "ε":
+            for simbolo in self._first_sequencia(corpo, handler):
+                if isinstance(simbolo, Terminal) and simbolo == _EPSILON:
                     tem_epsilon = True
                     continue
-                if isinstance(simbolo, Terminal):
-                    self._inserir(cabeca, simbolo, producao)
+                self._inserir(cabeca, simbolo, producao)
 
-            if tem_epsilon or not corpo:
+            if tem_epsilon:
                 for terminal in handler.get_follow(cabeca):
                     self._inserir(cabeca, terminal, producao)
 
