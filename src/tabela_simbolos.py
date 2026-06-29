@@ -1,6 +1,137 @@
 from typing import Dict, Optional, Tuple
 from dataclasses import dataclass
 
+@dataclass
+class EntradaTabela:
+    """Entrada na tabela de símbolos.
+    
+    Attributes:
+        lexema: String do identificador/palavra
+        categoria: Tipo léxico (PR, ID, etc.)
+        posicao: Posição na tabela
+        tipo: Tipo de dado (opcional, para análise semântica)
+        escopo: Escopo do símbolo (opcional)
+    """
+    lexema: str
+    categoria: str
+    posicao: int
+    tipo: Optional[str] = None
+    
+    def __str__(self) -> str:
+        return f"<{self.lexema}, {self.categoria}, pos={self.posicao}>"
+
+class Escopo:
+    """Classe para representar escopos de símbolos na tabela de símbolos.
+    
+    Um escopo é um inteiro que identifica o contexto em que um símbolo
+    (identificador, variável, função, etc.) está definido. Pode ser usado
+    para diferenciar símbolos com o mesmo nome em diferentes contextos.
+    """
+    
+    def __init__(self, numero: str, parent: Optional['Escopo'] = None):
+        self.numero = numero
+        self.parent = parent
+        self.tabela = TabelaSimbolos()
+        self.nfilhos = 0
+        self.type = None  # Tipo do escopo (função, bloco, etc.), opcional
+        
+    def encontrar_simbolo(self, lexema: str) -> Optional[EntradaTabela]:
+        """Busca um símbolo no escopo atual e nos escopos pais.
+        
+        Args:
+            lexema: Nome do símbolo a buscar
+            
+        Returns:
+            EntradaTabela se encontrada, ou None
+        """
+        entrada = self.tabela.obter(lexema)
+        if entrada:
+            return entrada
+        elif self.parent:
+            return self.parent.encontrar_simbolo(lexema)
+        else:
+            return None
+        
+    def inserir_palavra_reservada(self, lexema: str) -> EntradaTabela:
+        """Insere uma palavra reservada na tabela.
+        
+        Args:
+            lexema: Palavra reservada a inserir
+            
+        Returns:
+            EntradaTabela com categoria PR
+        """
+        entrada = self.encontrar_simbolo(lexema)
+        
+        if entrada == None:
+            entrada = EntradaTabela(
+                lexema=lexema,
+                categoria=CategoriaLexica.PALAVRA_RESERVADA,
+                posicao=self.proxima_posicao
+            )
+            self.tabela.tabela[lexema] = entrada
+            self.tabela.proxima_posicao += 1
+            entrada = self.tabela.tabela[lexema]
+            
+        return entrada
+    
+    def inserir_palavras_reservadas(self, palavras: list[str]):
+        for palavra in palavras:
+            self.inserir_palavra_reservada(palavra)
+    
+    def lookup(self, lexema: str, categoria: Optional[str] = None) -> EntradaTabela:
+        """Busca ou insere um símbolo na tabela.
+
+        - Se lexema já existe: retorna entrada existente
+        - Caso contrário: insere nova entrada e retorna
+        
+        Args:
+            lexema: Símbolo a buscar/inserir
+            categoria: Categoria léxica (se não especificada, usa ID)
+            
+        Returns:
+            EntradaTabela correspondente ao símbolo
+        """
+        # Se já existe, retornar
+        entrada = self.encontrar_simbolo(lexema)
+        
+        if entrada != None:
+            return entrada
+        
+        # Caso contrário, inserir novo símbolo
+        categoria = categoria or CategoriaLexica.IDENTIFICADOR
+        entrada = EntradaTabela(
+            lexema=lexema,
+            categoria=categoria,
+            posicao=self.proxima_posicao
+        )
+        self.tabela.tabela[lexema] = entrada
+        self.tabela.proxima_posicao += 1
+        
+        return entrada
+    
+    def aumentar_escopo(self) -> 'Escopo':
+        """Cria um novo escopo filho do atual.
+        
+        Returns:
+            Novo objeto Escopo com referência ao pai
+        """
+        self.nfilhos += 1
+        novo_numero = f"{self.numero}.{self.filhos}"
+        return Escopo(novo_numero, parent=self)
+    
+    def reduzir_escopo(self) -> Optional['Escopo']:
+        """Retorna o escopo pai, se existir.
+        
+        Returns:
+            Escopo pai ou None se for o escopo raiz
+        """
+        return self.parent
+        
+    
+        
+        
+    
 
 class CategoriaLexica:
     """Categorias léxicas padrão para tokens.
@@ -56,26 +187,6 @@ class CategoriaLexica:
         return [str(cat).lower() for cat in cls.todas()]
 
 
-@dataclass
-class EntradaTabela:
-    """Entrada na tabela de símbolos.
-    
-    Attributes:
-        lexema: String do identificador/palavra
-        categoria: Tipo léxico (PR, ID, etc.)
-        posicao: Posição na tabela
-        tipo: Tipo de dado (opcional, para análise semântica)
-        escopo: Escopo do símbolo (opcional)
-    """
-    lexema: str
-    categoria: str
-    posicao: int
-    tipo: Optional[str] = None
-    escopo: Optional[str] = None
-    
-    def __str__(self) -> str:
-        return f"<{self.lexema}, {self.categoria}, pos={self.posicao}>"
-
 
 class TabelaSimbolos:
     """Tabela de símbolos para gerenciar identificadores e palavras reservadas.
@@ -94,7 +205,8 @@ class TabelaSimbolos:
         self.tabela: Dict[str, EntradaTabela] = {}
         self.proxima_posicao: int = 0
         self.categorias = CategoriaLexica
-        
+    
+    '''
     def inserir_palavra_reservada(self, lexema: str) -> EntradaTabela:
         """Insere uma palavra reservada na tabela.
         
@@ -146,7 +258,7 @@ class TabelaSimbolos:
         self.proxima_posicao += 1
         
         return entrada
-    
+    '''
     def existe(self, lexema: str) -> bool:
         return lexema in self.tabela
     
@@ -236,6 +348,19 @@ class TabelaSimbolos:
             }
             for lexema, entrada in self.tabela.items()
         }
+        
+    def atualizar_tipo(self, lexema: str, tipo: str):
+        """Atualiza o tipo de dado de um símbolo existente.
+        
+        Args:
+            lexema: Símbolo a atualizar
+            tipo: Novo tipo de dado
+        """
+        if lexema in self.tabela:
+            self.tabela[lexema].tipo = tipo
+            
+
+
 
 
 __all__ = ['CategoriaLexica', 'EntradaTabela', 'TabelaSimbolos']

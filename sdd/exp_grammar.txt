@@ -1,0 +1,21 @@
+NUMEXPRESSION → TERM NUMEXPRESSION'
+NUMEXPRESSION' → + TERM NUMEXPRESSION'
+               | - TERM NUMEXPRESSION'
+               | ε
+TERM → UNARYEXPR TERM'
+TERM' → * UNARYEXPR TERM'
+      | / UNARYEXPR TERM'
+      | % UNARYEXPR TERM'
+      | ε
+UNARYEXPR → + FACTOR
+          | - FACTOR
+          | FACTOR
+FACTOR → intconstant
+       | floatconstant
+       | stringconstant
+       | null
+       | LVALUE
+       | ( NUMEXPRESSION )
+LVALUE → ident INDEXLIST
+INDEXLIST → [ NUMEXPRESSION ] INDEXLIST
+          | ε

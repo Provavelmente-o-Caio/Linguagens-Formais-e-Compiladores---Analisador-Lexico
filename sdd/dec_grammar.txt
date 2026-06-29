@@ -1,0 +1,6 @@
+VARDECL      → TYPE ident DIMLIST
+TYPE         → int
+             | float
+             | string
+DIMLIST      → [ intconstant ] DIMLIST
+             | ε

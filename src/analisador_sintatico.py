@@ -13,7 +13,7 @@ from src.gramaticas import (
 from src.ll.analisador_ll1 import AnalisadorLL1
 from src.ll.parser_ll1 import ParserLL1
 from src.slr import AnalisadorSLR, ParserSLR
-from src.tabela_simbolos import CategoriaLexica, TabelaSimbolos
+from src.tabela_simbolos import CategoriaLexica, TabelaSimbolos, Escopo
 
 
 class AnalisadorSintatico:
@@ -35,6 +35,7 @@ class AnalisadorSintatico:
         self.gramatica: Gramatica | None = None
         self._handler: HandlerGramatica | None = None
         self.arquivo_tokens: str | None = None
+        self.escopo_atual: Escopo | None = None
 
     def ler_gramatica(self, arquivo: str):
         """Lê gramática livre de contexto de um arquivo.
@@ -242,11 +243,11 @@ class AnalisadorSintatico:
         Returns:
             TabelaSimbolos inicializada com palavras reservadas
         """
-        self.tabela_simbolos = TabelaSimbolos()
+        self.escopo_atual = Escopo("0")
 
         for terminal in self.gramatica.terminais:
             if terminal.nome.isalpha() or terminal.nome.isalnum():
-                self.tabela_simbolos.inserir_palavra_reservada(terminal.nome)
+                self.escopo_atual.tabela.inserir_palavra_reservada(terminal.nome)
 
     def _processar_tokens(self, tokens: list[tuple[str, str]]) -> list[tuple[str, str]]:
         """Processa tokens aplicando tabela de símbolos e mapeamento para gramática.
@@ -266,7 +267,7 @@ class AnalisadorSintatico:
         tokens_processados = []
         for lexema, tipo_lexico in tokens:
             if tipo_lexico in CategoriaLexica.categorias_processaveis():
-                _, categoria = self.tabela_simbolos.categorizar_token(
+                _, categoria = self.escopo_atual.tabela.categorizar_token(
                     lexema, tipo_lexico
                 )
 
@@ -276,6 +277,11 @@ class AnalisadorSintatico:
                     tipo_gramatica = "id"
                 else:
                     tipo_gramatica = tipo_lexico
+                    
+                if lexema == "{":
+                    self.escopo_atual = self.escopo_atual.aumentar_escopo()
+                elif lexema == "}":
+                    self.escopo_atual = self.escopo_atual.reduzir_escopo() if self.escopo_atual.reduzir_escopo() else self.escopo_atual
 
                 tokens_processados.append((lexema, tipo_gramatica))
             else:
