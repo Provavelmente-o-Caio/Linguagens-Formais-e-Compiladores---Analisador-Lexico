@@ -312,11 +312,11 @@ class AnalisadorSintatico:
         refatoracao completa do parser neste momento.
         """
 
-        self.sdt = SDTConvCC2026_1()
-        self.gerador_tac = GeradorTACConvCC2026_1(self.sdt)
-        programa = self.gerador_tac.gerar(tokens_brutos)
-        self.codigo_intermediario = programa.texto()
-        return programa
+        #self.sdt = SDTConvCC2026_1()
+        #self.gerador_tac = GeradorTACConvCC2026_1(self.sdt)
+        #programa = self.gerador_tac.gerar(tokens_brutos)
+        #self.codigo_intermediario = programa.texto()
+        #return programa
 
     def _processar_tokens(self, tokens: list[tuple[str, str]]) -> list[tuple[str, str]]:
         """Processa tokens aplicando tabela de símbolos e mapeamento para gramática.
