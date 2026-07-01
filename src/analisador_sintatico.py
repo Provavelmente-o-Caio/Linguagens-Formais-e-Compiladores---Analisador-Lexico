@@ -303,7 +303,8 @@ class AnalisadorSintatico:
                         self.escopo_atual.reduzir_escopo()
                         if self.escopo_atual.reduzir_escopo()
                         else self.escopo_atual
-                    )
+                    ) 
+                    self.tipo_prox_loop = None
 
                 if lexema == "break":
                     if self.escopo_atual.tipo not in {"for", "while"}:
