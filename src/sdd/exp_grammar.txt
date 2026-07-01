@@ -66,164 +66,115 @@ INDEXLIST → [ NUMEXPRESSION ] INDEXLIST¹ // INDEXLIST.value = INDEXLIST¹.val
 
 O único atributo da gramática que é herdado é o atributo .inh, que é passado de NUMEXPRESSION' e TERM' pai para filho, caracterizando uma SDD L-atribuída.
 
-SDT da Gramática
+SDT da Gramática:
 
-NUMEXPRESSION → TERM NUMEXPRESSION'
-{
-    if (NUMEXPRESSION'.sym == '+')
-        NUMEXPRESSION.value = TERM.value + NUMEXPRESSION'.value;
-    else if (NUMEXPRESSION'.sym == '-')
-        NUMEXPRESSION.value = TERM.value - NUMEXPRESSION'.value;
-    else
-        NUMEXPRESSION.value = TERM.value;
-}
+NUMEXPRESSION →
+    TERM
+    { NUMEXPRESSION'.inh = TERM.value; }
+    NUMEXPRESSION'
+    { NUMEXPRESSION.value = NUMEXPRESSION'.value; }
 
-NUMEXPRESSION' → + TERM NUMEXPRESSION'¹
-{
-    NUMEXPRESSION'.sym = '+';
+NUMEXPRESSION' →
+    +
+    TERM
+    { NUMEXPRESSION'¹.inh = NUMEXPRESSION'.inh + TERM.value; }
+    NUMEXPRESSION'¹
+    { NUMEXPRESSION'.value = NUMEXPRESSION'¹.value; }
 
-    if (NUMEXPRESSION'¹.sym == '+')
-        NUMEXPRESSION'.value = TERM.value + NUMEXPRESSION'¹.value;
-    else if (NUMEXPRESSION'¹.sym == '-')
-        NUMEXPRESSION'.value = TERM.value - NUMEXPRESSION'¹.value;
-    else
-        NUMEXPRESSION'.value = TERM.value;
-}
+NUMEXPRESSION' →
+    -
+    TERM
+    { NUMEXPRESSION'¹.inh = NUMEXPRESSION'.inh - TERM.value; }
+    NUMEXPRESSION'¹
+    { NUMEXPRESSION'.value = NUMEXPRESSION'¹.value; }
 
-NUMEXPRESSION' → - TERM NUMEXPRESSION'¹
-{
-    NUMEXPRESSION'.sym = '-';
+NUMEXPRESSION' →
+    ε
+    { NUMEXPRESSION'.value = NUMEXPRESSION'.inh; }
 
-    if (NUMEXPRESSION'¹.sym == '+')
-        NUMEXPRESSION'.value = TERM.value + NUMEXPRESSION'¹.value;
-    else if (NUMEXPRESSION'¹.sym == '-')
-        NUMEXPRESSION'.value = TERM.value - NUMEXPRESSION'¹.value;
-    else
-        NUMEXPRESSION'.value = TERM.value;
-}
+TERM →
+    UNARYEXPR
+    { TERM'.inh = UNARYEXPR.value; }
+    TERM'
+    { TERM.value = TERM'.value; }
 
-NUMEXPRESSION' → ε
-{
-    NUMEXPRESSION'.sym = None;
-    NUMEXPRESSION'.value = 0;
-}
+TERM' →
+    *
+    UNARYEXPR
+    { TERM'¹.inh = TERM'.inh * UNARYEXPR.value; }
+    TERM'¹
+    { TERM'.value = TERM'¹.value; }
 
-TERM → UNARYEXPR TERM'
-{
-    if (TERM'.sym == '*')
-        TERM.value = UNARYEXPR.value * TERM'.value;
-    else if (TERM'.sym == '/')
-        TERM.value = UNARYEXPR.value / TERM'.value;
-    else if (TERM'.sym == '%')
-        TERM.value = UNARYEXPR.value % TERM'.value;
-    else
-        TERM.value = UNARYEXPR.value;
-}
+TERM' →
+    /
+    UNARYEXPR
+    { TERM'¹.inh = TERM'.inh / UNARYEXPR.value; }
+    TERM'¹
+    { TERM'.value = TERM'¹.value; }
 
-TERM' → * UNARYEXPR TERM'¹
-{
-    TERM'.sym = '*';
+TERM' →
+    %
+    UNARYEXPR
+    { TERM'¹.inh = TERM'.inh % UNARYEXPR.value; }
+    TERM'¹
+    { TERM'.value = TERM'¹.value; }
 
-    if (TERM'¹.sym == '*')
-        TERM'.value = UNARYEXPR.value * TERM'¹.value;
-    else if (TERM'¹.sym == '/')
-        TERM'.value = UNARYEXPR.value / TERM'¹.value;
-    else if (TERM'¹.sym == '%')
-        TERM'.value = UNARYEXPR.value % TERM'¹.value;
-    else
-        TERM'.value = UNARYEXPR.value;
-}
+TERM' →
+    ε
+    { TERM'.value = TERM'.inh; }
 
-TERM' → / UNARYEXPR TERM'¹
-{
-    TERM'.sym = '/';
+UNARYEXPR →
+    +
+    FACTOR
+    { UNARYEXPR.value = +FACTOR.value; }
 
-    if (TERM'¹.sym == '*')
-        TERM'.value = UNARYEXPR.value * TERM'¹.value;
-    else if (TERM'¹.sym == '/')
-        TERM'.value = UNARYEXPR.value / TERM'¹.value;
-    else if (TERM'¹.sym == '%')
-        TERM'.value = UNARYEXPR.value % TERM'¹.value;
-    else
-        TERM'.value = UNARYEXPR.value;
-}
+UNARYEXPR →
+    -
+    FACTOR
+    { UNARYEXPR.value = -FACTOR.value; }
 
-TERM' → % UNARYEXPR TERM'¹
-{
-    TERM'.sym = '%';
+UNARYEXPR →
+    FACTOR
+    { UNARYEXPR.value = FACTOR.value; }
 
-    if (TERM'¹.sym == '*')
-        TERM'.value = UNARYEXPR.value * TERM'¹.value;
-    else if (TERM'¹.sym == '/')
-        TERM'.value = UNARYEXPR.value / TERM'¹.value;
-    else if (TERM'¹.sym == '%')
-        TERM'.value = UNARYEXPR.value % TERM'¹.value;
-    else
-        TERM'.value = UNARYEXPR.value;
-}
+FACTOR →
+    intconstant
+    { FACTOR.value = intconstant.value; }
 
-TERM' → ε
-{
-    TERM'.sym = None;
-    TERM'.value = 0;
-}
+FACTOR →
+    floatconstant
+    { FACTOR.value = floatconstant.value; }
 
-UNARYEXPR → + FACTOR
-{
-    UNARYEXPR.value = +FACTOR.value;
-}
+FACTOR →
+    stringconstant
+    { FACTOR.value = stringconstant.value; }
 
-UNARYEXPR → - FACTOR
-{
-    UNARYEXPR.value = -FACTOR.value;
-}
+FACTOR →
+    null
+    { FACTOR.value = null.value; }
 
-UNARYEXPR → FACTOR
-{
-    UNARYEXPR.value = FACTOR.value;
-}
+FACTOR →
+    LVALUE
+    { FACTOR.value = LVALUE.value; }
 
-FACTOR → intconstant
-{
-    FACTOR.value = intconstant.value;
-}
+FACTOR →
+    (
+    NUMEXPRESSION
+    )
+    { FACTOR.value = NUMEXPRESSION.value; }
 
-FACTOR → floatconstant
-{
-    FACTOR.value = floatconstant.value;
-}
+LVALUE →
+    ident
+    INDEXLIST
+    { LVALUE.value = INDEXLIST.value; }
 
-FACTOR → stringconstant
-{
-    FACTOR.value = stringconstant.value;
-}
+INDEXLIST →
+    [
+    NUMEXPRESSION
+    ]
+    INDEXLIST¹
+    { INDEXLIST.value = INDEXLIST¹.value; }
 
-FACTOR → null
-{
-    FACTOR.value = null.value;
-}
-
-FACTOR → LVALUE
-{
-    FACTOR.value = LVALUE.value;
-}
-
-FACTOR → ( NUMEXPRESSION )
-{
-    FACTOR.value = NUMEXPRESSION.value;
-}
-
-LVALUE → ident INDEXLIST
-{
-    LVALUE.value = INDEXLIST.value;
-}
-
-INDEXLIST → [ NUMEXPRESSION ] INDEXLIST¹
-{
-    INDEXLIST.value = INDEXLIST¹.value;
-}
-
-INDEXLIST → ε
-{
-    INDEXLIST.value = 0;
-}
+INDEXLIST →
+    ε
+    { INDEXLIST.value = 0; }
