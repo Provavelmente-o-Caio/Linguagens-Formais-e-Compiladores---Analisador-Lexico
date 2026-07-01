@@ -12,19 +12,11 @@ from src.gramaticas import (
 )
 from src.ll.analisador_ll1 import AnalisadorLL1
 from src.ll.parser_ll1 import ParserLL1
+from src.sdt.sdt import GeradorTACConvCC2026_1, SDTConvCC2026_1
 from src.tabela_simbolos import CategoriaLexica, Escopo
 
 
 class AnalisadorSintatico:
-    """Analisador sintático SLR (Simple LR).
-
-    Implementa gerador de analisadores sintáticos do tipo SLR a partir de
-    gramáticas livres de contexto. Constrói tabelas ACTION e GOTO para
-    parsing bottom-up.
-
-    Referência: Aho et al. (2006), Seção 4.7, Algoritmo 4.46, pp. 253-271.
-    """
-
     def __init__(self):
         """Inicializa o analisador sintático com estruturas vazias.
 
@@ -36,6 +28,9 @@ class AnalisadorSintatico:
         self.arquivo_tokens: str | None = None
         self.escopo_atual: Escopo | None = None
         self.tabela_simbolos = None
+        self.sdt: SDTConvCC2026_1 | None = None
+        self.gerador_tac: GeradorTACConvCC2026_1 | None = None
+        self.codigo_intermediario: str = ""
 
     def ler_gramatica(self, arquivo: str):
         """Lê gramática livre de contexto de um arquivo.
@@ -312,6 +307,20 @@ class AnalisadorSintatico:
 
             i += 1
 
+    def _gerar_codigo_intermediario(self, tokens_brutos: list[tuple[str, str]]):
+        """Gera codigo intermediario em TAC a partir dos tokens ja validados.
+
+        A geracao usa o esqueleto de SDT disponivel em src/sdt/sdt.py. O
+        objetivo e manter o fluxo de compilacao integrado sem exigir uma
+        refatoracao completa do parser neste momento.
+        """
+
+        self.sdt = SDTConvCC2026_1()
+        self.gerador_tac = GeradorTACConvCC2026_1(self.sdt)
+        programa = self.gerador_tac.gerar(tokens_brutos)
+        self.codigo_intermediario = programa.texto()
+        return programa
+
     def _processar_tokens(self, tokens: list[tuple[str, str]]) -> list[tuple[str, str]]:
         """Processa tokens aplicando tabela de símbolos e mapeamento para gramática.
 
@@ -442,6 +451,7 @@ class AnalisadorSintatico:
 
         if resultado:
             self._aplicar_sdd_declaracoes(tokens_brutos)
+            self._gerar_codigo_intermediario(tokens_brutos)
 
         if resultado and not completo:
             print("SENTENÇA ACEITA!")
@@ -473,6 +483,7 @@ class AnalisadorSintatico:
 
             if resultado:
                 self._aplicar_sdd_declaracoes(tokens_brutos)
+                self._gerar_codigo_intermediario(tokens_brutos)
 
             if resultado and not completo:
                 print("SENTENÇA ACEITA!")
