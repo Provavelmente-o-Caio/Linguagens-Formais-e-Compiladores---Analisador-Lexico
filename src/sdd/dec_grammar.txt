@@ -1,6 +1,37 @@
+Gramática de declaração de tipos:
+
 VARDECL      → TYPE ident DIMLIST
 TYPE         → int
              | float
              | string
 DIMLIST      → [ intconstant ] DIMLIST
              | ε
+
+SDD da Gramática:
+
+VARDECL → TYPE ident DIMLIST // VARDECL.Type = Type.Type
+TYPE → int      // TYPE.Type = int
+     | float    // TYPE.Type = float
+     | string   // TYPE.Type = string
+
+SDT da Gramática:
+
+VARDECL → TYPE ident DIMLIST
+{
+    VARDECL.Type = TYPE.Type;
+}
+
+TYPE → int
+{
+    TYPE.Type = int;
+}
+
+TYPE → float
+{
+    TYPE.Type = float;
+}
+
+TYPE → string
+{
+    TYPE.Type = string;
+}

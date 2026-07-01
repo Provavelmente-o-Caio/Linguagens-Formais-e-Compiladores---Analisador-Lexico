@@ -30,7 +30,8 @@ def Node_Exp(prod, children, value, sym, name, self):
             elif self.children[1].sym == '-':
                 self.value = self.children[0].value - self.children[1].value
             elif self.children[1].sym == None:
-                self.value = self.children[0].value
+                #self.value = self.children[0].value
+                self.value = 0
             
         elif self.prod == "TERM":
             if self.children[1].sym == '*':
@@ -59,7 +60,8 @@ def Node_Exp(prod, children, value, sym, name, self):
             elif self.children[1].sym == '%':
                 self.value = self.children[0].value % self.children[1].value
             elif self.children[1].sym == None:
-                self.value = self.children[0].value
+                #self.value = self.children[0].value
+                self.value = 0
         
         elif self.prod == "UNARYEXP":
             if self.children[0].sym == '-':
