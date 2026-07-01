@@ -22,33 +22,49 @@ INDEXLIST → [ NUMEXPRESSION ] INDEXLIST
 
 SDD da Gramática:
 
-NUMEXPRESSION → TERM NUMEXPRESSION' // NUMEXPRESSION.value = TERM.value + NUMEXPRESSION'.value if NUMEXPRESSION'.sym == '+', else if NUMEXPRESSION'.sym == '-' TERM.value - NUMEXPRESSION'.value, else TERM,value
-NUMEXPRESSION' → + TERM NUMEXPRESSION'¹ // NUMEXPRESSION'.sym = + // NUMEXPRESSION'.value = TERM.value + NUMEXPRESSION'¹.value if NUMEXPRESSION'¹.sym == '+', else if NUMEXPRESSION'¹.sym == '-' TERM.value - NUMEXPRESSION'¹.value, else TERM,value
-               | - TERM NUMEXPRESSION'¹ // NUMEXPRESSION'.sym = - // NUMEXPRESSION'.value = TERM.value + NUMEXPRESSION'¹.value if NUMEXPRESSION'¹.sym == '+', else if NUMEXPRESSION'¹.sym == '-' TERM.value - NUMEXPRESSION'¹.value, else TERM,value
-               | ε // NUMEXPRESSION'.sym = None // NUMEXPRESSION'.value = 0
+NUMEXPRESSION → TERM NUMEXPRESSION' // NUMEXPRESSION'.inh = TERM.value // NUMEXPRESSION.value = NUMEXPRESSION'.value
 
-TERM → UNARYEXPR TERM' // TERM.value = UNARYEXPR.value * TERM'.value if TERM'.sym == '*', else if TERM'.sym == '/' UNARYEXPR.value / TERM'.value, else if TERM'.sym == '%' UNARYEXPR.value / TERM'.value, else UNARYEXPR.value
-TERM' → * UNARYEXPR TERM'¹ // TERM'.sym = - // TERM.value = UNARYEXPR.value * TERM'¹.value if TERM'¹.sym == '*', else if TERM'¹.sym == '/' UNARYEXPR.value / TERM'¹.value, else if TERM'¹.sym == '%' UNARYEXPR.value / TERM'¹.value, else UNARYEXPR.value
-      | / UNARYEXPR TERM'¹ // TERM'.sym = * // TERM.value = UNARYEXPR.value * TERM'¹.value if TERM'¹.sym == '*', else if TERM'¹.sym == '/' UNARYEXPR.value / TERM'¹.value, else if TERM'¹.sym == '%' UNARYEXPR.value / TERM'¹.value, else UNARYEXPR.value
-      | % UNARYEXPR TERM'¹ // TERM'.sym = % // TERM.value = UNARYEXPR.value * TERM'¹.value if TERM'¹.sym == '*', else if TERM'¹.sym == '/' UNARYEXPR.value / TERM'¹.value, else if TERM'¹.sym == '%' UNARYEXPR.value / TERM'¹.value, else UNARYEXPR.value
-      | ε // TERM'.sym = None // TERM'.value = 0
+NUMEXPRESSION' → + TERM NUMEXPRESSION'¹ // NUMEXPRESSION'¹.inh = NUMEXPRESSION'.inh + TERM.value // NUMEXPRESSION'.value = NUMEXPRESSION'¹.value
 
-UNARYEXPR → + FACTOR // UNARYEXPR.value = + FACTOR.value
-          | - FACTOR // UNARYEXPR.value = - FACTOR.value
-          | FACTOR // UNARYEXPR.value = FACTOR.value
+                 - TERM NUMEXPRESSION'¹ // NUMEXPRESSION'¹.inh = NUMEXPRESSION'.inh - TERM.value // NUMEXPRESSION'.value = NUMEXPRESSION'¹.value
+
+                 ε // NUMEXPRESSION'.value = NUMEXPRESSION'.inh
+
+TERM → UNARYEXPR TERM' // TERM'.inh = UNARYEXPR.value // TERM.value = TERM'.value
+
+TERM' → * UNARYEXPR TERM'¹ // TERM'¹.inh = TERM'.inh * UNARYEXPR.value // TERM'.value = TERM'¹.value
+
+        / UNARYEXPR TERM'¹ // TERM'¹.inh = TERM'.inh / UNARYEXPR.value // TERM'.value = TERM'¹.value
+
+        % UNARYEXPR TERM'¹ // TERM'¹.inh = TERM'.inh % UNARYEXPR.value // TERM'.value = TERM'¹.value
+
+        ε // TERM'.value = TERM'.inh
+
+UNARYEXPR → + FACTOR // UNARYEXPR.value = +FACTOR.value
+
+            - FACTOR // UNARYEXPR.value = -FACTOR.value
+
+            FACTOR // UNARYEXPR.value = FACTOR.value
 
 FACTOR → intconstant // FACTOR.value = intconstant.value
-       | floatconstant // FACTOR.value = floatconstant.value
-       | stringconstant // FACTOR.value = stringconstant.value
-       | null // FACTOR.value = null.value
-       | LVALUE // FACTOR.value = LVALUE.value
-       | ( NUMEXPRESSION ) // FACTOR.value = NUMEXPRESSION.value
+
+         floatconstant // FACTOR.value = floatconstant.value
+
+         stringconstant // FACTOR.value = stringconstant.value
+
+         null // FACTOR.value = null.value
+
+         LVALUE // FACTOR.value = LVALUE.value
+
+         ( NUMEXPRESSION ) // FACTOR.value = NUMEXPRESSION.value
 
 LVALUE → ident INDEXLIST // LVALUE.value = INDEXLIST.value
-INDEXLIST → [ NUMEXPRESSION ] INDEXLIST¹ // INDEXLIST.value = INDEXLIST¹.value
-          | ε // INDEXLIST.value = 0
 
-Como a SDD só possuí atributos sintetisados, ela é automaticamente L-atribuída.
+INDEXLIST → [ NUMEXPRESSION ] INDEXLIST¹ // INDEXLIST.value = INDEXLIST¹.value
+
+            ε // INDEXLIST.value = 0
+
+O único atributo da gramática que é herdado é o atributo .inh, que é passado de NUMEXPRESSION' e TERM' pai para filho, caracterizando uma SDD L-atribuída.
 
 SDT da Gramática
 
