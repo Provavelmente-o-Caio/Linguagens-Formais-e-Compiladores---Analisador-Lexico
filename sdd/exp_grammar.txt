@@ -19,3 +19,193 @@ FACTOR → intconstant
 LVALUE → ident INDEXLIST
 INDEXLIST → [ NUMEXPRESSION ] INDEXLIST
           | ε
+
+SDD da Gramática:
+
+NUMEXPRESSION → TERM NUMEXPRESSION' // NUMEXPRESSION.value = TERM.value + NUMEXPRESSION'.value if NUMEXPRESSION'.sym == '+', else if NUMEXPRESSION'.sym == '-' TERM.value - NUMEXPRESSION'.value, else TERM,value
+NUMEXPRESSION' → + TERM NUMEXPRESSION'¹ // NUMEXPRESSION'.sym = + // NUMEXPRESSION'.value = TERM.value + NUMEXPRESSION'¹.value if NUMEXPRESSION'¹.sym == '+', else if NUMEXPRESSION'¹.sym == '-' TERM.value - NUMEXPRESSION'¹.value, else TERM,value
+               | - TERM NUMEXPRESSION'¹ // NUMEXPRESSION'.sym = - // NUMEXPRESSION'.value = TERM.value + NUMEXPRESSION'¹.value if NUMEXPRESSION'¹.sym == '+', else if NUMEXPRESSION'¹.sym == '-' TERM.value - NUMEXPRESSION'¹.value, else TERM,value
+               | ε // NUMEXPRESSION'.sym = None // NUMEXPRESSION'.value = 0
+
+TERM → UNARYEXPR TERM' // TERM.value = UNARYEXPR.value * TERM'.value if TERM'.sym == '*', else if TERM'.sym == '/' UNARYEXPR.value / TERM'.value, else if TERM'.sym == '%' UNARYEXPR.value / TERM'.value, else UNARYEXPR.value
+TERM' → * UNARYEXPR TERM'¹ // TERM'.sym = - // TERM.value = UNARYEXPR.value * TERM'¹.value if TERM'¹.sym == '*', else if TERM'¹.sym == '/' UNARYEXPR.value / TERM'¹.value, else if TERM'¹.sym == '%' UNARYEXPR.value / TERM'¹.value, else UNARYEXPR.value
+      | / UNARYEXPR TERM'¹ // TERM'.sym = * // TERM.value = UNARYEXPR.value * TERM'¹.value if TERM'¹.sym == '*', else if TERM'¹.sym == '/' UNARYEXPR.value / TERM'¹.value, else if TERM'¹.sym == '%' UNARYEXPR.value / TERM'¹.value, else UNARYEXPR.value
+      | % UNARYEXPR TERM'¹ // TERM'.sym = % // TERM.value = UNARYEXPR.value * TERM'¹.value if TERM'¹.sym == '*', else if TERM'¹.sym == '/' UNARYEXPR.value / TERM'¹.value, else if TERM'¹.sym == '%' UNARYEXPR.value / TERM'¹.value, else UNARYEXPR.value
+      | ε // TERM'.sym = None // TERM'.value = 0
+
+UNARYEXPR → + FACTOR // UNARYEXPR.value = + FACTOR.value
+          | - FACTOR // UNARYEXPR.value = - FACTOR.value
+          | FACTOR // UNARYEXPR.value = FACTOR.value
+
+FACTOR → intconstant // FACTOR.value = intconstant.value
+       | floatconstant // FACTOR.value = floatconstant.value
+       | stringconstant // FACTOR.value = stringconstant.value
+       | null // FACTOR.value = null.value
+       | LVALUE // FACTOR.value = LVALUE.value
+       | ( NUMEXPRESSION ) // FACTOR.value = NUMEXPRESSION.value
+
+LVALUE → ident INDEXLIST // LVALUE.value = INDEXLIST.value
+INDEXLIST → [ NUMEXPRESSION ] INDEXLIST¹ // INDEXLIST.value = INDEXLIST¹.value
+          | ε // INDEXLIST.value = 0
+
+SDT da Gramática
+
+NUMEXPRESSION → TERM NUMEXPRESSION'
+{
+    if (NUMEXPRESSION'.sym == '+')
+        NUMEXPRESSION.value = TERM.value + NUMEXPRESSION'.value;
+    else if (NUMEXPRESSION'.sym == '-')
+        NUMEXPRESSION.value = TERM.value - NUMEXPRESSION'.value;
+    else
+        NUMEXPRESSION.value = TERM.value;
+}
+
+NUMEXPRESSION' → + TERM NUMEXPRESSION'¹
+{
+    NUMEXPRESSION'.sym = '+';
+
+    if (NUMEXPRESSION'¹.sym == '+')
+        NUMEXPRESSION'.value = TERM.value + NUMEXPRESSION'¹.value;
+    else if (NUMEXPRESSION'¹.sym == '-')
+        NUMEXPRESSION'.value = TERM.value - NUMEXPRESSION'¹.value;
+    else
+        NUMEXPRESSION'.value = TERM.value;
+}
+
+NUMEXPRESSION' → - TERM NUMEXPRESSION'¹
+{
+    NUMEXPRESSION'.sym = '-';
+
+    if (NUMEXPRESSION'¹.sym == '+')
+        NUMEXPRESSION'.value = TERM.value + NUMEXPRESSION'¹.value;
+    else if (NUMEXPRESSION'¹.sym == '-')
+        NUMEXPRESSION'.value = TERM.value - NUMEXPRESSION'¹.value;
+    else
+        NUMEXPRESSION'.value = TERM.value;
+}
+
+NUMEXPRESSION' → ε
+{
+    NUMEXPRESSION'.sym = None;
+    NUMEXPRESSION'.value = 0;
+}
+
+TERM → UNARYEXPR TERM'
+{
+    if (TERM'.sym == '*')
+        TERM.value = UNARYEXPR.value * TERM'.value;
+    else if (TERM'.sym == '/')
+        TERM.value = UNARYEXPR.value / TERM'.value;
+    else if (TERM'.sym == '%')
+        TERM.value = UNARYEXPR.value % TERM'.value;
+    else
+        TERM.value = UNARYEXPR.value;
+}
+
+TERM' → * UNARYEXPR TERM'¹
+{
+    TERM'.sym = '*';
+
+    if (TERM'¹.sym == '*')
+        TERM'.value = UNARYEXPR.value * TERM'¹.value;
+    else if (TERM'¹.sym == '/')
+        TERM'.value = UNARYEXPR.value / TERM'¹.value;
+    else if (TERM'¹.sym == '%')
+        TERM'.value = UNARYEXPR.value % TERM'¹.value;
+    else
+        TERM'.value = UNARYEXPR.value;
+}
+
+TERM' → / UNARYEXPR TERM'¹
+{
+    TERM'.sym = '/';
+
+    if (TERM'¹.sym == '*')
+        TERM'.value = UNARYEXPR.value * TERM'¹.value;
+    else if (TERM'¹.sym == '/')
+        TERM'.value = UNARYEXPR.value / TERM'¹.value;
+    else if (TERM'¹.sym == '%')
+        TERM'.value = UNARYEXPR.value % TERM'¹.value;
+    else
+        TERM'.value = UNARYEXPR.value;
+}
+
+TERM' → % UNARYEXPR TERM'¹
+{
+    TERM'.sym = '%';
+
+    if (TERM'¹.sym == '*')
+        TERM'.value = UNARYEXPR.value * TERM'¹.value;
+    else if (TERM'¹.sym == '/')
+        TERM'.value = UNARYEXPR.value / TERM'¹.value;
+    else if (TERM'¹.sym == '%')
+        TERM'.value = UNARYEXPR.value % TERM'¹.value;
+    else
+        TERM'.value = UNARYEXPR.value;
+}
+
+TERM' → ε
+{
+    TERM'.sym = None;
+    TERM'.value = 0;
+}
+
+UNARYEXPR → + FACTOR
+{
+    UNARYEXPR.value = +FACTOR.value;
+}
+
+UNARYEXPR → - FACTOR
+{
+    UNARYEXPR.value = -FACTOR.value;
+}
+
+UNARYEXPR → FACTOR
+{
+    UNARYEXPR.value = FACTOR.value;
+}
+
+FACTOR → intconstant
+{
+    FACTOR.value = intconstant.value;
+}
+
+FACTOR → floatconstant
+{
+    FACTOR.value = floatconstant.value;
+}
+
+FACTOR → stringconstant
+{
+    FACTOR.value = stringconstant.value;
+}
+
+FACTOR → null
+{
+    FACTOR.value = null.value;
+}
+
+FACTOR → LVALUE
+{
+    FACTOR.value = LVALUE.value;
+}
+
+FACTOR → ( NUMEXPRESSION )
+{
+    FACTOR.value = NUMEXPRESSION.value;
+}
+
+LVALUE → ident INDEXLIST
+{
+    LVALUE.value = INDEXLIST.value;
+}
+
+INDEXLIST → [ NUMEXPRESSION ] INDEXLIST¹
+{
+    INDEXLIST.value = INDEXLIST¹.value;
+}
+
+INDEXLIST → ε
+{
+    INDEXLIST.value = 0;
+}
