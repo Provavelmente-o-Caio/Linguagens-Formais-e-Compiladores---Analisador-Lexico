@@ -31,6 +31,7 @@ class AnalisadorSintatico:
         self.tabela_simbolos = None
         self.codigo_intermediario: str = ""
         self.sdd: SDD | None = None
+        self.tipo_prox_loop = None
 
     def ler_gramatica(self, arquivo: str):
         """Lê gramática livre de contexto de um arquivo.
@@ -292,14 +293,25 @@ class AnalisadorSintatico:
                 else:
                     tipo_gramatica = tipo_lexico
 
+
+                if lexema in {"for", "while"}:
+                    self.tipo_prox_loop = lexema
+
                 if lexema == "{":
-                    self.escopo_atual = self.escopo_atual.aumentar_escopo()
+                    self.escopo_atual = self.escopo_atual.aumentar_escopo(tipo=self.tipo_prox_loop)
+                    self.tipo_prox_loop = None
                 elif lexema == "}":
                     self.escopo_atual = (
                         self.escopo_atual.reduzir_escopo()
                         if self.escopo_atual.reduzir_escopo()
                         else self.escopo_atual
                     )
+
+                if lexema == "break":
+                    if self.escopo_atual.tipo not in {"for", "while"}:
+                        raise ValueError(
+                            f"Token 'break' fora de loop em escopo {self.escopo_atual.numero}"
+                        )
 
                 tokens_processados.append((lexema, tipo_gramatica))
             else:

@@ -112,7 +112,7 @@ class Escopo:
 
         return entrada
 
-    def aumentar_escopo(self) -> "Escopo":
+    def aumentar_escopo(self, tipo) -> "Escopo":
         """Cria um novo escopo filho do atual.
 
         Returns:
@@ -120,7 +120,7 @@ class Escopo:
         """
         self.nfilhos += 1
         novo_numero = f"{self.numero}.{self.nfilhos}"
-        return Escopo(novo_numero, parent=self)
+        return Escopo(novo_numero, parent=self, tipo=tipo)
 
     def reduzir_escopo(self) -> Optional["Escopo"]:
         """Retorna o escopo pai, se existir.
