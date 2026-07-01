@@ -28,6 +28,7 @@ class AnalisadorSintatico:
         self.escopo_atual: Escopo | None = None
         self.tabela_simbolos = None
         self.codigo_intermediario: str = ""
+        self.tipo_prox_loop = None
 
     def ler_gramatica(self, arquivo: str):
         """Lê gramática livre de contexto de um arquivo.
@@ -344,9 +345,14 @@ class AnalisadorSintatico:
                     tipo_gramatica = "id"
                 else:
                     tipo_gramatica = tipo_lexico
+                
+
+                if lexema in {"for", "while"}:
+                    self.tipo_prox_loop = lexema
 
                 if lexema == "{":
-                    self.escopo_atual = self.escopo_atual.aumentar_escopo()
+                    self.escopo_atual = self.escopo_atual.aumentar_escopo(tipo=self.tipo_prox_loop)
+                    self.tipo_prox_loop = None
                 elif lexema == "}":
                     self.escopo_atual = (
                         self.escopo_atual.reduzir_escopo()
