@@ -1,8 +1,17 @@
-def Node_Dec(prod, children, type, name, self):
-    self.prod = prod
-    self.children = children
-    self.type = type
-    self.name = name
+from __future__ import annotations
+
+class NodeDec:
+    def __init__(
+        self,
+        prod: str,
+        children: list["NodeDec"] | None = None,
+        type_: str | None = None,
+        name: str | None = None,
+    ):
+        self.prod = prod
+        self.children = children or []
+        self.type = type_
+        self.name = name
 
     def proc_node(self):
         if self.prod == "leaf":

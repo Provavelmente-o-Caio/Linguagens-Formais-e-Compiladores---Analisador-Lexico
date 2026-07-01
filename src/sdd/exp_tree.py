@@ -1,120 +1,119 @@
-def Node_Exp(prod, children, value, sym, name, self):
-    self.prod = prod
-    self.children = children
-    self.value = value
-    self.sym = sym
-    self.name = name
-    
+from __future__ import annotations
+
+
+class NodeExp:
+    def __init__(
+        self,
+        prod: str,
+        children: list["NodeExp"] | None = None,
+        value=None,
+        sym: str | None = None,
+        name: str | None = None,
+    ):
+        self.prod = prod
+        self.children = children or []
+        self.value = value
+        self.sym = sym
+        self.name = name
+
+    @classmethod
+    def leaf(cls, value=None, name: str | None = None, sym: str | None = None) -> "NodeExp":
+        return cls("leaf", value=value, name=name, sym=sym)
+
     def proc_node(self):
-        if self.prod == 'leaf':
-            return self.value, self.name
-        
-        elif self.prod == "NUMEXPRESSION":
-            if self.children[1].sym == '+':
-                self.value = self.children[0].value + self.children[1].value
-            elif self.children[1].sym == '-':
-                self.value = self.children[0].value - self.children[1].value
-            elif self.children[1].sym == None:
-                self.value = self.children[0].value
-            
+        if self.prod == "leaf":
+            return self.value
+
+        if self.prod == "NUMEXPRESSION":
+            termo = self.children[0].value
+            resto = self.children[1]
+
+            if resto.sym == "+":
+                self.value = termo + resto.value
+            elif resto.sym == "-":
+                self.value = termo - resto.value
+            else:
+                self.value = termo
+
         elif self.prod == "NUMEXPRESSION'":
-            if self.children[0].sym == '+':
-                self.sym = '+'
-            elif self.children[0].sym == '-':
-                self.sym = '-'
-            elif self.children[0].sym == None:
-                self.sym = None  
-                
-            if self.children[1].sym == '+':
-                self.value = self.children[0].value + self.children[1].value
-            elif self.children[1].sym == '-':
-                self.value = self.children[0].value - self.children[1].value
-            elif self.children[1].sym == None:
-                #self.value = self.children[0].value
+            if not self.children:
+                self.sym = None
                 self.value = 0
-            
+            else:
+                operador = self.children[0].sym
+                termo = self.children[1].value
+                resto = self.children[2]
+
+                self.sym = operador
+
+                if resto.sym == "+":
+                    self.value = termo + resto.value
+                elif resto.sym == "-":
+                    self.value = termo - resto.value
+                else:
+                    self.value = termo
+
         elif self.prod == "TERM":
-            if self.children[1].sym == '*':
-                self.value = self.children[0].value * self.children[1].value
-            elif self.children[1].sym == '/':
-                self.value = self.children[0].value / self.children[1].value
-            elif self.children[1].sym == '%':
-                self.value = self.children[0].value % self.children[1].value
-            elif self.children[1].sym == None:
-                self.value = self.children[0].value
-        
+            fator = self.children[0].value
+            resto = self.children[1]
+
+            if resto.sym == "*":
+                self.value = fator * resto.value
+            elif resto.sym == "/":
+                self.value = fator / resto.value
+            elif resto.sym == "%":
+                self.value = fator % resto.value
+            else:
+                self.value = fator
+
         elif self.prod == "TERM'":
-            if self.children[0].sym == '*':
-                self.sym = '*'
-            elif self.children[0].sym == '/':
-                self.sym = '/'
-            elif self.children[0].sym == '%':
-                self.sym = '%'
-            elif self.children[0].sym == None:
-                self.sym = None  
-            
-            if self.children[1].sym == '*':
-                self.value = self.children[0].value * self.children[1].value
-            elif self.children[1].sym == '/':
-                self.value = self.children[0].value / self.children[1].value
-            elif self.children[1].sym == '%':
-                self.value = self.children[0].value % self.children[1].value
-            elif self.children[1].sym == None:
-                #self.value = self.children[0].value
+            if not self.children:
+                self.sym = None
                 self.value = 0
-        
-        elif self.prod == "UNARYEXP":
-            if self.children[0].sym == '-':
-                self.value = -self.children[1].value
-            elif self.children[0].sym == '+':
-                self.value = +self.children[1].value
-            elif self.children[0].sym == None:
+            else:
+                operador = self.children[0].sym
+                fator = self.children[1].value
+                resto = self.children[2]
+
+                self.sym = operador
+
+                if resto.sym == "*":
+                    self.value = fator * resto.value
+                elif resto.sym == "/":
+                    self.value = fator / resto.value
+                elif resto.sym == "%":
+                    self.value = fator % resto.value
+                else:
+                    self.value = fator
+
+        elif self.prod == "UNARYEXPR":
+            if len(self.children) == 2:
+                operador = self.children[0].sym
+                valor = self.children[1].value
+
+                if operador == "-":
+                    self.value = -valor
+                elif operador == "+":
+                    self.value = +valor
+            else:
                 self.value = self.children[0].value
-            
+
         elif self.prod == "FACTOR":
-            if self.children[0].sym == '(':
+            if len(self.children) == 3:
                 self.value = self.children[1].value
-            elif self.children[0].sym == None:
+            else:
                 self.value = self.children[0].value
-        
+
         elif self.prod == "LVALUE":
-            self.value = self.children[1].value
-    
+            self.value = None
+
         else:
             self.value = None
-            
+
+        return self.value
+
     def proc_tree(self):
         for child in self.children:
-            proc_tree(child)
-            
-        proc_node(self)
-    
-    '''
-    def update_table(self, table):
-            if self.prod == 'leaf':
-                table[self.name] = self.value
-            else:
-                for child in self.children:
-                    update_table(child, table)
-    '''
-        
+            child.proc_tree()
 
-    '''
-    def get_value(self):
-        if self.prod == 'leaf':
-            return self.values[0]
-        elif self.prod == '+':
-            return get_value(self.children[0]) + get_value(self.children[1])
-        elif self.prod == '*':
-            return get_value(self.children[0]) * get_value(self.children[1])
-        elif self.prod == '-':
-            return get_value(self.children[0]) - get_value(self.children[1])
-        elif self.prod == '/':
-            return get_value(self.children[0]) / get_value(self.children[1])
-        elif self.prod == '%':
-            return get_value(self.children[0]) % get_value(self.children[1])
-        elif self.prod == 'neg':
-            return -get_value(self.children[0])
-        elif self.prod == 'pos':
-            return +get_value(self.children[0])
-    '''  
+        return self.proc_node()

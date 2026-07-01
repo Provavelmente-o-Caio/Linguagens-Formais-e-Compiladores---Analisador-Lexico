@@ -242,79 +242,6 @@ class AnalisadorSintatico:
             if terminal.nome.isalpha() or terminal.nome.isalnum():
                 self.escopo_atual.tabela.inserir_palavra_reservada(terminal.nome)
 
-    def _aplicar_sdd_declaracoes(self, tokens_brutos: list[tuple[str, str]]):
-        """Passagem semântica mínima para registrar tipos de variáveis.
-
-        Esta etapa cobre o que já existe no SDD do projeto: inserção do tipo na
-        tabela de símbolos. Ela percorre a sequência de tokens original e grava
-        o tipo do identificador logo após um token de tipo pré-definido.
-        """
-
-        if not self.escopo_atual:
-            return
-
-        tipos_validos = {"int", "float", "string"}
-        i = 0
-
-        while i < len(tokens_brutos):
-            lexema, tipo = tokens_brutos[i]
-
-            if lexema in tipos_validos:
-                j = i + 1
-
-                # procura o identificador imediatamente após o tipo
-                while j < len(tokens_brutos) and tokens_brutos[j][0].isspace():
-                    j += 1
-
-                if j < len(tokens_brutos):
-                    nome, categoria = tokens_brutos[j]
-
-                    if categoria == "id":
-                        entrada = self.escopo_atual.tabela.lookup(nome)
-                        entrada.tipo = lexema
-
-                        # pula dimensões do vetor, se existirem
-                        k = j + 1
-                        profundidade = 0
-                        while k < len(tokens_brutos):
-                            simbolo = tokens_brutos[k][0]
-
-                            if simbolo == "[":
-                                profundidade += 1
-                            elif simbolo == "]" and profundidade > 0:
-                                profundidade -= 1
-                            elif simbolo == ";" and profundidade == 0:
-                                break
-                            elif simbolo in {
-                                "def",
-                                "if",
-                                "for",
-                                "return",
-                                "print",
-                                "read",
-                                "break",
-                                "{",
-                            }:
-                                break
-
-                            k += 1
-
-                        i = k
-                        continue
-
-            i += 1
-
-    def _gerar_codigo_intermediario(self, tokens_brutos: list[tuple[str, str]]):
-        """Gera codigo intermediario em TAC a partir dos tokens ja validados.
-
-        A geracao usa o esqueleto de SDT disponivel em src/sdt/sdt.py. O
-        objetivo e manter o fluxo de compilacao integrado sem exigir uma
-        refatoracao completa do parser neste momento.
-        """
-
-        programa = self.gerador_tac.gerar(tokens_brutos)
-        self.codigo_intermediario = programa.texto()
-        return programa
 
     def _processar_tokens(self, tokens: list[tuple[str, str]]) -> list[tuple[str, str]]:
         """Processa tokens aplicando tabela de símbolos e mapeamento para gramática.
@@ -434,10 +361,6 @@ class AnalisadorSintatico:
 
             parser = ParserLL1(tabela, self.gramatica)
             resultado = parser.parsear(tokens)
-
-            if resultado:
-                self._aplicar_sdd_declaracoes(tokens_brutos)
-                self._gerar_codigo_intermediario(tokens_brutos)
 
             if resultado and not completo:
                 print("SENTENÇA ACEITA!")
