@@ -12,7 +12,6 @@ from src.gramaticas import (
 )
 from src.ll.analisador_ll1 import AnalisadorLL1
 from src.ll.parser_ll1 import ParserLL1
-from src.sdt.sdt import GeradorTACConvCC2026_1, SDTConvCC2026_1
 from src.tabela_simbolos import CategoriaLexica, Escopo
 
 
@@ -28,8 +27,6 @@ class AnalisadorSintatico:
         self.arquivo_tokens: str | None = None
         self.escopo_atual: Escopo | None = None
         self.tabela_simbolos = None
-        self.sdt: SDTConvCC2026_1 | None = None
-        self.gerador_tac: GeradorTACConvCC2026_1 | None = None
         self.codigo_intermediario: str = ""
 
     def ler_gramatica(self, arquivo: str):
