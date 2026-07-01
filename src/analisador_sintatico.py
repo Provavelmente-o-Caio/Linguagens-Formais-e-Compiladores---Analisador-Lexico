@@ -312,11 +312,9 @@ class AnalisadorSintatico:
         refatoracao completa do parser neste momento.
         """
 
-        #self.sdt = SDTConvCC2026_1()
-        #self.gerador_tac = GeradorTACConvCC2026_1(self.sdt)
-        #programa = self.gerador_tac.gerar(tokens_brutos)
-        #self.codigo_intermediario = programa.texto()
-        #return programa
+        programa = self.gerador_tac.gerar(tokens_brutos)
+        self.codigo_intermediario = programa.texto()
+        return programa
 
     def _processar_tokens(self, tokens: list[tuple[str, str]]) -> list[tuple[str, str]]:
         """Processa tokens aplicando tabela de símbolos e mapeamento para gramática.
@@ -419,47 +417,6 @@ class AnalisadorSintatico:
         print(f"Tokens carregados com successo do arquivo [{arquivo}]")
 
         return tokens
-
-    def analisar(self, arquivo_tokens: str, completo: bool = False) -> bool:
-        """Executa análise sintática completa a partir de arquivo de tokens.
-
-        Args:
-            arquivo_tokens: Caminho do arquivo com tokens (formato: <lexema, tipo>)
-
-        Returns:
-            True se sentença aceita, False se erro sintático
-        """
-        self._criar_tabela_simbolos()
-
-        tokens_brutos = self._ler_tokens_arquivo(arquivo_tokens)
-        tokens = self._processar_tokens(tokens_brutos)
-
-        handler = self._obter_handler()
-        handler.calcular_firsts()
-        handler.calcular_follows()
-
-        # Construir coleção canônica e tabelas
-        analisador_slr = AnalisadorSLR(self.gramatica, handler)
-        analisador_slr.construir_colecao_canonica()
-        tabela = analisador_slr.construir_tabela()
-
-        parser = ParserSLR(tabela, self.gramatica, analisador_slr.producao_inicial)
-        resultado = parser.parsear(tokens)
-
-        if resultado:
-            self._aplicar_sdd_declaracoes(tokens_brutos)
-            self._gerar_codigo_intermediario(tokens_brutos)
-
-        if resultado and not completo:
-            print("SENTENÇA ACEITA!")
-            parser.imprimir_derivacao()
-        elif not resultado:
-            print("ERRO SINTÁTICO!")
-
-        if completo:
-            return resultado, handler, analisador_slr, parser
-
-        return resultado
 
     def analisar_ll1(self, arquivo_tokens: str, completo: bool = False) -> bool:
         self._criar_tabela_simbolos()

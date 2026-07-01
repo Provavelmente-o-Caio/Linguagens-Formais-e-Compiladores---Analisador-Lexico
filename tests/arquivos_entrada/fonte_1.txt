@@ -19,13 +19,20 @@ def main(int entrada) {
     int a;
     int b;
     int c;
+    int d;
+    int e;
     int i;
+    int j;
     float f;
+    float g;
     string msg;
+    string status;
     a = entrada;
     b = acumula(a);
     c = duplica(b);
+    e = 0;
     f = c + 1.5;
+    g = f * 2.0;
     msg = "inicio";
     if(f > 0) {
         msg = "positivo";
@@ -37,6 +44,8 @@ def main(int entrada) {
         a = a + i;
         b = b + a;
         c = c + b;
+        d = d + c;
+        e = e + d;
     }
     if(c > a) {
         f = f + c;
@@ -46,70 +55,70 @@ def main(int entrada) {
     print a;
     print b;
     print c;
+    print d;
+    print e;
     print f;
     a = a + 1;
     b = b + 2;
     c = c + 3;
+    d = d + 4;
+    e = e + 5;
     f = f + 4.0;
+    g = g + f;
     if(a > b) {
         a = a + b;
     } else {
         b = b + a;
     }
     c = c + a;
-    f = f + b;
+    d = d + b;
+    e = e + c;
+    f = f + d;
+    g = g + e;
     a = a + 2;
     b = b + 3;
     c = c + 4;
+    d = d + 5;
+    e = e + 6;
     f = f + 5.0;
     a = a + 3;
     b = b + 4;
     c = c + 5;
+    d = d + 6;
+    e = e + 7;
     f = f + 6.0;
     a = a + 4;
     b = b + 5;
     c = c + 6;
+    d = d + 7;
+    e = e + 8;
     f = f + 7.0;
-    a = a + 5;
-    b = b + 6;
-    c = c + 7;
-    f = f + 8.0;
-    a = a + 6;
-    b = b + 7;
-    c = c + 8;
-    f = f + 9.0;
-    a = a + 7;
-    b = b + 8;
-    c = c + 9;
-    f = f + 10.0;
-    a = a + 8;
-    b = b + 9;
-    c = c + 10;
-    f = f + 11.0;
-    a = a + 9;
-    b = b + 10;
-    c = c + 11;
-    f = f + 12.0;
-    a = a + 10;
-    b = b + 11;
-    c = c + 12;
-    f = f + 13.0;
-    a = a + 11;
-    b = b + 12;
-    c = c + 13;
-    f = f + 14.0;
-    a = a + 12;
-    b = b + 13;
-    c = c + 14;
-    f = f + 15.0;
+    for(j = 0; j < 3; j = j + 1) {
+        a = a + j;
+        b = b + j;
+        c = c + j;
+        d = d + j;
+        e = e + j;
+        if(e > d) {
+            g = g + e;
+        } else {
+            g = g + d;
+        }
+    }
     if(a > c) {
+        status = "a_maior";
         a = a;
     } else {
+        status = "c_maior";
         c = c;
     }
+    print status;
     print a;
     print b;
     print c;
+    print d;
+    print e;
     print f;
+    print g;
     return c;
 }

@@ -1,0 +1,153 @@
+def calcula_base(int x, int y) {
+    int r;
+    int i;
+    r = x + y;
+    i = 0;
+    for(i = 0; i < 5; i = i + 1) {
+        r = r + i;
+    }
+    if(r > 50) {
+        r = r - 10;
+    } else {
+        r = r + 10;
+    }
+    return r;
+}
+
+def escolhe(int a, int b, int c) {
+    int r;
+    r = a;
+    if(b > r) {
+        r = b;
+    } else {
+        r = r;
+    }
+    if(c > r) {
+        r = c;
+    } else {
+        r = r;
+    }
+    return r;
+}
+
+def eco(int valor) {
+    print valor;
+    return valor;
+}
+
+def main(int entrada) {
+    int a;
+    int b;
+    int c;
+    int d;
+    int e;
+    int i;
+    int k;
+    int limite;
+    float peso;
+    float resultado;
+    string etapa;
+    string decisao;
+    a = entrada;
+    b = 10;
+    c = 20;
+    d = 30;
+    e = 0;
+    limite = 12;
+    peso = 1.0;
+    resultado = 0.0;
+    etapa = "inicio_fluxo";
+    decisao = "nenhuma";
+    print etapa;
+    read a;
+    if(a < b) {
+        decisao = "menor_que_b";
+        e = b - a;
+    } else {
+        decisao = "maior_ou_igual_b";
+        e = a - b;
+    }
+    print decisao;
+    print e;
+    for(i = 0; i < limite; i = i + 1) {
+        a = a + i;
+        b = b + 1;
+        c = c + b;
+        d = d + c;
+        e = e + d;
+        if(e > 500) {
+            etapa = "alto";
+        } else {
+            etapa = "baixo";
+        }
+        print etapa;
+    }
+    resultado = a + b;
+    resultado = resultado + c;
+    resultado = resultado + d;
+    resultado = resultado + e;
+    peso = resultado / 2.0;
+    print resultado;
+    print peso;
+    k = 0;
+    for(k = 0; k < 4; k = k + 1) {
+        a = calcula_base(a, k);
+        b = calcula_base(b, k);
+        c = escolhe(a, b, c);
+        d = d + c;
+        if(d >= e) {
+            e = e + d;
+        } else {
+            d = d + e;
+        }
+        print a;
+        print b;
+        print c;
+        print d;
+        print e;
+    }
+    if(a == b) {
+        decisao = "iguais";
+    } else {
+        decisao = "diferentes";
+    }
+    print decisao;
+    if(c != d) {
+        etapa = "c_d_diferentes";
+    } else {
+        etapa = "c_d_iguais";
+    }
+    print etapa;
+    if(e >= d) {
+        resultado = e + peso;
+    } else {
+        resultado = d + peso;
+    }
+    print resultado;
+    a = eco(a);
+    b = eco(b);
+    c = eco(c);
+    d = eco(d);
+    e = eco(e);
+    for(i = 0; i < 6; i = i + 1) {
+        a = a + 1;
+        b = b + 2;
+        c = c + 3;
+        d = d + 4;
+        e = e + 5;
+        resultado = resultado + i;
+    }
+    print a;
+    print b;
+    print c;
+    print d;
+    print e;
+    print resultado;
+    if(resultado > 1000.0) {
+        etapa = "resultado_grande";
+    } else {
+        etapa = "resultado_pequeno";
+    }
+    print etapa;
+    return e;
+}
