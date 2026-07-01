@@ -1,4 +1,5 @@
 VENV := .venv
+PYTHON_VERSION := python3.12
 PYTHON := $(VENV)/bin/python3
 PIP := $(VENV)/bin/pip
 
@@ -8,7 +9,7 @@ run: install
 	$(PYTHON) main.py
 
 install:
-	@test -d $(VENV) || python3 -m venv $(VENV)
+	@test -d $(VENV) || $(PYTHON_VERSION) -m venv $(VENV)
 	$(PIP) install -r requirements.txt
 
 clean:
