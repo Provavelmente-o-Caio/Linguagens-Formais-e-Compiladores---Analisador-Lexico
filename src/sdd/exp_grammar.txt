@@ -48,6 +48,8 @@ LVALUE → ident INDEXLIST // LVALUE.value = INDEXLIST.value
 INDEXLIST → [ NUMEXPRESSION ] INDEXLIST¹ // INDEXLIST.value = INDEXLIST¹.value
           | ε // INDEXLIST.value = 0
 
+Como a SDD só possuí atributos sintetisados, ela é automaticamente L-atribuída.
+
 SDT da Gramática
 
 NUMEXPRESSION → TERM NUMEXPRESSION'

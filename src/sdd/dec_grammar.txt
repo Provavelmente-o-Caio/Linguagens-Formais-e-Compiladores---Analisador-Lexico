@@ -14,6 +14,8 @@ TYPE → int      // TYPE.Type = int
      | float    // TYPE.Type = float
      | string   // TYPE.Type = string
 
+Como a SDD só possuí atributos sintetisados, ela é automaticamente L-atribuída
+
 SDT da Gramática:
 
 VARDECL → TYPE ident DIMLIST
