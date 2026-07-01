@@ -13,6 +13,7 @@ from src.gramaticas import (
 from src.ll.analisador_ll1 import AnalisadorLL1
 from src.ll.parser_ll1 import ParserLL1
 from src.tabela_simbolos import CategoriaLexica, Escopo
+from src.sdd import SDD
 
 
 class AnalisadorSintatico:
@@ -25,9 +26,11 @@ class AnalisadorSintatico:
         self.gramatica: Gramatica | None = None
         self._handler: HandlerGramatica | None = None
         self.arquivo_tokens: str | None = None
+        self.escopo_global: Escopo | None = None
         self.escopo_atual: Escopo | None = None
         self.tabela_simbolos = None
         self.codigo_intermediario: str = ""
+        self.sdd: SDD | None = None
 
     def ler_gramatica(self, arquivo: str):
         """Lê gramática livre de contexto de um arquivo.
@@ -235,12 +238,29 @@ class AnalisadorSintatico:
         Returns:
             TabelaSimbolos inicializada com palavras reservadas
         """
-        self.escopo_atual = Escopo("0")
-        self.tabela_simbolos = self.escopo_atual.tabela
+        self.escopo_global = Escopo("0")
+        self.escopo_atual = self.escopo_global
+        self.tabela_simbolos = self.escopo_global.tabela
 
-        for terminal in self.gramatica.terminais:
-            if terminal.nome.isalpha() or terminal.nome.isalnum():
-                self.escopo_atual.tabela.inserir_palavra_reservada(terminal.nome)
+        palavras_reservadas = {
+            "def",
+            "if",
+            "else",
+            "for",
+            "break",
+            "return",
+            "print",
+            "read",
+            "new",
+            "int",
+            "float",
+            "string",
+            "null",
+        }
+
+        for palavra in palavras_reservadas:
+            self.escopo_global.tabela.inserir_palavra_reservada(palavra)
+
 
 
     def _processar_tokens(self, tokens: list[tuple[str, str]]) -> list[tuple[str, str]]:
@@ -345,7 +365,80 @@ class AnalisadorSintatico:
 
         return tokens
 
+    def _aplicar_sdd(self, tokens_brutos: list[tuple[str, str]]):
+        """Aplica as regras SDD após a aceitação sintática.
+
+        Atualmente o SDD cobre a propagação de tipos em declarações,
+        atualizando a tabela de símbolos com os atributos sintetizados.
+        """
+
+        if not self.escopo_global:
+            return
+
+        self.sdd = SDD(self.escopo_global)
+        self.sdd.aplicar(tokens_brutos)
+
+        self.tabela_simbolos = self.escopo_global.tabela
+
     def analisar_ll1(self, arquivo_tokens: str, completo: bool = False) -> bool:
+        self._criar_tabela_simbolos()
+
+        tokens_brutos = self._ler_tokens_arquivo(arquivo_tokens)
+        tokens = self._processar_tokens(tokens_brutos)
+
+        handler = self._obter_handler()
+        handler.calcular_firsts()
+        handler.calcular_follows()
+
+        if not self.gramatica:
+            return False
+
+        analisador_ll1 = AnalisadorLL1(self.gramatica, handler)
+        tabela = analisador_ll1.construir_tabela()
+
+        parser = ParserLL1(tabela, self.gramatica)
+        resultado = parser.parsear(tokens)
+
+        if resultado:
+            self._aplicar_sdd(tokens_brutos)
+
+        if resultado and not completo:
+            print("SENTENÇA ACEITA!")
+            parser.imprimir_derivacao()
+        elif not resultado:
+            print("ERRO SINTÁTICO!")
+
+        if completo:
+            return resultado, handler, analisador_ll1, parser
+
+        return resultado
+
+    """
+    def analisar_ll1(self, arquivo_tokens: str, completo: bool = False) -> bool:
+        self._criar_tabela_simbolos()
+
+        tokens_brutos = self._ler_tokens_arquivo(arquivo_tokens)
+        tokens = self._processar_tokens(tokens_brutos)
+
+        handler = self._obter_handler()
+        handler.calcular_firsts()
+        handler.calcular_follows()
+
+        if self.gramatica:
+            analisador_ll1 = AnalisadorLL1(self.gramatica, handler)
+            tabela = analisador_ll1.construir_tabela()
+
+            parser = ParserLL1(tabela, self.gramatica)
+            resultado = parser.parsear(tokens)
+
+            if resultado:
+                self._aplicar_sdd(tokens_brutos)
+
+            if resultado and not completo:
+                print("SENTENÇA ACEITA!")
+                parser.imprimir_derivacao()
+            elif not resultado:
+                print("ERRO SINTÁTICO!")
         self._criar_tabela_simbolos()
 
         tokens_brutos = self._ler_tokens_arquivo(arquivo_tokens)
@@ -372,3 +465,4 @@ class AnalisadorSintatico:
                 return resultado, handler, analisador_ll1, parser
 
             return resultado
+    """
