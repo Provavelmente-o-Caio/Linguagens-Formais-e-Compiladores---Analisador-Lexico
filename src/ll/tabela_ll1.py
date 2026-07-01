@@ -49,9 +49,10 @@ class TabelaLL1:
 
         # conflito -> outro símbolo já presente
         if self.tabela.get(chave) and self.tabela.get(chave) != producao:
-            raise ConflictErrorLL1(chave, self.tabela[chave], producao)
-        else:
-            self.tabela[chave] = producao
+            print(f"[AVISO] {ConflictErrorLL1(chave, self.tabela[chave], producao)}")
+            return
+
+        self.tabela[chave] = producao
 
     def consultar(
         self, nao_terminal: NaoTerminal, terminal: Terminal

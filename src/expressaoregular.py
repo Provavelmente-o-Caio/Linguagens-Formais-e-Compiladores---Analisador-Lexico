@@ -169,8 +169,11 @@ class ExpressaoRegular:
     def formatar_expressao(self, expressao: str) -> str:
         """
         Insere concatenação explícita (.) onde necessário,
-        tratando corretamente sequências escapadas como \.
+        tratando corretamente sequências escapadas como \\.
         """
+
+        def eh_literal(token: str) -> bool:
+            return token not in {"|", ".", "(", ")", "*", "+", "?", "\\"}
 
         resultado: list[str] = []
         anterior: str | None = None
@@ -192,7 +195,7 @@ class ExpressaoRegular:
                 # inserir concatenação antes do token apenas se anterior for símbolo verdadeiro
                 if anterior is not None:
                     anterior_simbolo = (
-                        anterior.isalnum()
+                        eh_literal(anterior)
                         or anterior in [")", "*", "+", "?"]
                         or anterior == "ESCAPED"
                     )
@@ -210,12 +213,12 @@ class ExpressaoRegular:
 
             if anterior is not None:
                 anterior_simbolo = (
-                    anterior.isalnum()
+                    eh_literal(anterior)
                     or anterior in [")", "*", "+", "?"]
                     or anterior == "ESCAPED"
                 )
 
-                atual_simbolo = (atual.isalnum() or atual == "(")
+                atual_simbolo = eh_literal(atual) or atual == "("
 
                 if anterior_simbolo and atual_simbolo:
                     resultado.append(".")
@@ -225,7 +228,6 @@ class ExpressaoRegular:
             i += 1
 
         return "".join(resultado)
-
 
     def parse(self) -> NodoER:
         """

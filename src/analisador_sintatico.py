@@ -12,8 +12,7 @@ from src.gramaticas import (
 )
 from src.ll.analisador_ll1 import AnalisadorLL1
 from src.ll.parser_ll1 import ParserLL1
-from src.slr import AnalisadorSLR, ParserSLR
-from src.tabela_simbolos import CategoriaLexica, TabelaSimbolos, Escopo
+from src.tabela_simbolos import CategoriaLexica, Escopo
 
 
 class AnalisadorSintatico:
@@ -36,6 +35,7 @@ class AnalisadorSintatico:
         self._handler: HandlerGramatica | None = None
         self.arquivo_tokens: str | None = None
         self.escopo_atual: Escopo | None = None
+        self.tabela_simbolos = None
 
     def ler_gramatica(self, arquivo: str):
         """Lê gramática livre de contexto de um arquivo.
@@ -244,10 +244,73 @@ class AnalisadorSintatico:
             TabelaSimbolos inicializada com palavras reservadas
         """
         self.escopo_atual = Escopo("0")
+        self.tabela_simbolos = self.escopo_atual.tabela
 
         for terminal in self.gramatica.terminais:
             if terminal.nome.isalpha() or terminal.nome.isalnum():
                 self.escopo_atual.tabela.inserir_palavra_reservada(terminal.nome)
+
+    def _aplicar_sdd_declaracoes(self, tokens_brutos: list[tuple[str, str]]):
+        """Passagem semântica mínima para registrar tipos de variáveis.
+
+        Esta etapa cobre o que já existe no SDD do projeto: inserção do tipo na
+        tabela de símbolos. Ela percorre a sequência de tokens original e grava
+        o tipo do identificador logo após um token de tipo pré-definido.
+        """
+
+        if not self.escopo_atual:
+            return
+
+        tipos_validos = {"int", "float", "string"}
+        i = 0
+
+        while i < len(tokens_brutos):
+            lexema, tipo = tokens_brutos[i]
+
+            if lexema in tipos_validos:
+                j = i + 1
+
+                # procura o identificador imediatamente após o tipo
+                while j < len(tokens_brutos) and tokens_brutos[j][0].isspace():
+                    j += 1
+
+                if j < len(tokens_brutos):
+                    nome, categoria = tokens_brutos[j]
+
+                    if categoria == "id":
+                        entrada = self.escopo_atual.tabela.lookup(nome)
+                        entrada.tipo = lexema
+
+                        # pula dimensões do vetor, se existirem
+                        k = j + 1
+                        profundidade = 0
+                        while k < len(tokens_brutos):
+                            simbolo = tokens_brutos[k][0]
+
+                            if simbolo == "[":
+                                profundidade += 1
+                            elif simbolo == "]" and profundidade > 0:
+                                profundidade -= 1
+                            elif simbolo == ";" and profundidade == 0:
+                                break
+                            elif simbolo in {
+                                "def",
+                                "if",
+                                "for",
+                                "return",
+                                "print",
+                                "read",
+                                "break",
+                                "{",
+                            }:
+                                break
+
+                            k += 1
+
+                        i = k
+                        continue
+
+            i += 1
 
     def _processar_tokens(self, tokens: list[tuple[str, str]]) -> list[tuple[str, str]]:
         """Processa tokens aplicando tabela de símbolos e mapeamento para gramática.
@@ -277,11 +340,15 @@ class AnalisadorSintatico:
                     tipo_gramatica = "id"
                 else:
                     tipo_gramatica = tipo_lexico
-                    
+
                 if lexema == "{":
                     self.escopo_atual = self.escopo_atual.aumentar_escopo()
                 elif lexema == "}":
-                    self.escopo_atual = self.escopo_atual.reduzir_escopo() if self.escopo_atual.reduzir_escopo() else self.escopo_atual
+                    self.escopo_atual = (
+                        self.escopo_atual.reduzir_escopo()
+                        if self.escopo_atual.reduzir_escopo()
+                        else self.escopo_atual
+                    )
 
                 tokens_processados.append((lexema, tipo_gramatica))
             else:
@@ -358,8 +425,8 @@ class AnalisadorSintatico:
         """
         self._criar_tabela_simbolos()
 
-        tokens = self._ler_tokens_arquivo(arquivo_tokens)
-        tokens = self._processar_tokens(tokens)
+        tokens_brutos = self._ler_tokens_arquivo(arquivo_tokens)
+        tokens = self._processar_tokens(tokens_brutos)
 
         handler = self._obter_handler()
         handler.calcular_firsts()
@@ -372,6 +439,9 @@ class AnalisadorSintatico:
 
         parser = ParserSLR(tabela, self.gramatica, analisador_slr.producao_inicial)
         resultado = parser.parsear(tokens)
+
+        if resultado:
+            self._aplicar_sdd_declaracoes(tokens_brutos)
 
         if resultado and not completo:
             print("SENTENÇA ACEITA!")
@@ -387,8 +457,8 @@ class AnalisadorSintatico:
     def analisar_ll1(self, arquivo_tokens: str, completo: bool = False) -> bool:
         self._criar_tabela_simbolos()
 
-        tokens = self._ler_tokens_arquivo(arquivo_tokens)
-        tokens = self._processar_tokens(tokens)
+        tokens_brutos = self._ler_tokens_arquivo(arquivo_tokens)
+        tokens = self._processar_tokens(tokens_brutos)
 
         handler = self._obter_handler()
         handler.calcular_firsts()
@@ -400,6 +470,9 @@ class AnalisadorSintatico:
 
             parser = ParserLL1(tabela, self.gramatica)
             resultado = parser.parsear(tokens)
+
+            if resultado:
+                self._aplicar_sdd_declaracoes(tokens_brutos)
 
             if resultado and not completo:
                 print("SENTENÇA ACEITA!")

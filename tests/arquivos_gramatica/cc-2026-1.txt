@@ -1,0 +1,108 @@
+<programa> ::= <lista_funcoes>
+<programa> ::= <lista_comandos>
+<programa> ::= &
+
+<lista_funcoes> ::= <funcao> <lista_funcoes_tail>
+<lista_funcoes_tail> ::= <funcao> <lista_funcoes_tail>
+<lista_funcoes_tail> ::= &
+
+<funcao> ::= def id "(" <parametros> ")" "{" <lista_comandos> "}"
+
+<parametros> ::= <tipo> id <rep_parametros>
+<parametros> ::= &
+<rep_parametros> ::= "," <tipo> id <rep_parametros>
+<rep_parametros> ::= &
+
+<lista_comandos> ::= <comando> <rep_comandos>
+<rep_comandos> ::= <comando> <rep_comandos>
+<rep_comandos> ::= &
+
+<comando> ::= <declaracao> ";"
+<comando> ::= <atribuicao> ";"
+<comando> ::= <print_stmt> ";"
+<comando> ::= <read_stmt> ";"
+<comando> ::= <return_stmt> ";"
+<comando> ::= <if_stmt>
+<comando> ::= <for_stmt>
+<comando> ::= "{" <lista_comandos> "}"
+<comando> ::= break ";"
+<comando> ::= ";"
+
+<declaracao> ::= <tipo> id <dimensoes>
+<dimensoes> ::= "[" intconstant "]" <dimensoes>
+<dimensoes> ::= &
+
+<tipo> ::= int
+<tipo> ::= float
+<tipo> ::= string
+
+<atribuicao> ::= <lvalue> "=" <rhs_atribuicao>
+<rhs_atribuicao> ::= <expressao>
+<rhs_atribuicao> ::= <alloc_expressao>
+
+<chamada_funcao> ::= id "(" <args_chamada> ")"
+<args_chamada> ::= id <rep_args_chamada>
+<args_chamada> ::= &
+<rep_args_chamada> ::= "," id <rep_args_chamada>
+<rep_args_chamada> ::= &
+
+<print_stmt> ::= print <expressao>
+<read_stmt> ::= read <lvalue>
+<return_stmt> ::= return <return_tail>
+<return_tail> ::= <expressao>
+<return_tail> ::= &
+
+<if_stmt> ::= if "(" <expressao> ")" <comando> <if_else>
+<if_else> ::= else <comando>
+<if_else> ::= &
+
+<for_stmt> ::= for "(" <atribuicao> ";" <expressao> ";" <atribuicao> ")" <comando>
+
+<alloc_expressao> ::= new <tipo> <rep_alloc>
+<rep_alloc> ::= "[" <num_expressao> "]" <rep_alloc>
+<rep_alloc> ::= &
+
+<expressao> ::= <num_expressao> <resto_expressao>
+<resto_expressao> ::= <op_rel> <num_expressao>
+<resto_expressao> ::= &
+
+<op_rel> ::= "<"
+<op_rel> ::= ">"
+<op_rel> ::= "<="
+<op_rel> ::= ">="
+<op_rel> ::= "=="
+<op_rel> ::= "!="
+
+<num_expressao> ::= <termo> <rep_num_expressao>
+<rep_num_expressao> ::= <op_add> <termo> <rep_num_expressao>
+<rep_num_expressao> ::= &
+
+<op_add> ::= "+"
+<op_add> ::= "-"
+
+<termo> ::= <unary_expr> <rep_termo>
+<rep_termo> ::= <op_mult> <unary_expr> <rep_termo>
+<rep_termo> ::= &
+
+<op_mult> ::= "*"
+<op_mult> ::= "/"
+<op_mult> ::= "%"
+
+<unary_expr> ::= "+" <fator>
+<unary_expr> ::= "-" <fator>
+<unary_expr> ::= <fator>
+
+<id_tail> ::= "(" <args_chamada> ")"
+<id_tail> ::= "[" <num_expressao> "]" <indice_lista>
+<id_tail> ::= &
+
+<fator> ::= intconstant
+<fator> ::= floatconstant
+<fator> ::= stringconstant
+<fator> ::= null
+<fator> ::= id <id_tail>
+<fator> ::= "(" <num_expressao> ")"
+
+<lvalue> ::= id <indice_lista>
+<indice_lista> ::= "[" <num_expressao> "]" <indice_lista>
+<indice_lista> ::= &
