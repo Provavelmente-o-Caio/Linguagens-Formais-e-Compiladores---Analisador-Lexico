@@ -1,0 +1,12 @@
+def main(int entrada) {
+    int a;
+    float b;
+    string c;
+    a = entrada;
+    b = 1.5;
+    c = "texto";
+    a = a + b;
+    b = b + 2.0;
+    c = c + "ok";
+    return a;
+}

@@ -62,13 +62,14 @@ def interface_sintatico_execucao(analisador_sintatico):
         table.add_row("1", "Selecionar arquivo de entrada (tokens)")
         table.add_row("2", "Executar analisador sintático")
         table.add_row("3", "Mostrar tabela de símbolos")
+        table.add_row("4", "Mostrar erros semânticos")
         table.add_row("0", "Voltar")
 
         console.print(table)
 
         escolha = Prompt.ask(
             "\n[bold green]Selecione uma opção[/bold green]",
-            choices=["0", "1", "2", "3"],
+            choices=["0", "1", "2", "3", "4"],
             default="0",
         )
 
@@ -97,5 +98,29 @@ def interface_sintatico_execucao(analisador_sintatico):
                 input("ENTER para continuar...")
                 continue
             mostrar_tabela_simbolos(analisador_sintatico.tabela_simbolos)
+        elif escolha == "4":
+            mostrar_erros_semanticos(analisador_sintatico)
         elif escolha == "0":
             return
+
+
+def mostrar_erros_semanticos(analisador_sintatico):
+    console.clear()
+    console.print(Panel("[bold cyan]Erros Semânticos[/bold cyan]", expand=False))
+
+    erros = getattr(analisador_sintatico, "erros_semanticos", [])
+
+    if not erros:
+        console.print("[green]Nenhum erro semântico encontrado.[/green]")
+        input("\nENTER para continuar...")
+        return
+
+    tabela = Table(show_header=True, header_style="bold red", show_lines=True)
+    tabela.add_column("#", justify="center")
+    tabela.add_column("Erro", style="white")
+
+    for i, erro in enumerate(erros, 1):
+        tabela.add_row(str(i), erro)
+
+    console.print(tabela)
+    input("\nENTER para continuar...")

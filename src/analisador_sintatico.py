@@ -31,7 +31,7 @@ class AnalisadorSintatico:
         self.tabela_simbolos = None
         self.codigo_intermediario: str = ""
         self.sdd: SDD | None = None
-        self.tipo_prox_loop = None
+        self.erros_semanticos: list[str] = []
 
     def ler_gramatica(self, arquivo: str):
         """Lê gramática livre de contexto de um arquivo.
@@ -262,8 +262,6 @@ class AnalisadorSintatico:
         for palavra in palavras_reservadas:
             self.escopo_global.tabela.inserir_palavra_reservada(palavra)
 
-
-
     def _processar_tokens(self, tokens: list[tuple[str, str]]) -> list[tuple[str, str]]:
         """Processa tokens aplicando tabela de símbolos e mapeamento para gramática.
 
@@ -391,8 +389,10 @@ class AnalisadorSintatico:
         self.sdd.aplicar(tokens_brutos)
 
         self.tabela_simbolos = self.escopo_global.tabela
+        self.erros_semanticos = self.sdd.erros
 
     def analisar_ll1(self, arquivo_tokens: str, completo: bool = False) -> bool:
+        self.erros_semanticos = []
         self._criar_tabela_simbolos()
 
         tokens_brutos = self._ler_tokens_arquivo(arquivo_tokens)
@@ -424,57 +424,3 @@ class AnalisadorSintatico:
             return resultado, handler, analisador_ll1, parser
 
         return resultado
-
-    """
-    def analisar_ll1(self, arquivo_tokens: str, completo: bool = False) -> bool:
-        self._criar_tabela_simbolos()
-
-        tokens_brutos = self._ler_tokens_arquivo(arquivo_tokens)
-        tokens = self._processar_tokens(tokens_brutos)
-
-        handler = self._obter_handler()
-        handler.calcular_firsts()
-        handler.calcular_follows()
-
-        if self.gramatica:
-            analisador_ll1 = AnalisadorLL1(self.gramatica, handler)
-            tabela = analisador_ll1.construir_tabela()
-
-            parser = ParserLL1(tabela, self.gramatica)
-            resultado = parser.parsear(tokens)
-
-            if resultado:
-                self._aplicar_sdd(tokens_brutos)
-
-            if resultado and not completo:
-                print("SENTENÇA ACEITA!")
-                parser.imprimir_derivacao()
-            elif not resultado:
-                print("ERRO SINTÁTICO!")
-        self._criar_tabela_simbolos()
-
-        tokens_brutos = self._ler_tokens_arquivo(arquivo_tokens)
-        tokens = self._processar_tokens(tokens_brutos)
-
-        handler = self._obter_handler()
-        handler.calcular_firsts()
-        handler.calcular_follows()
-
-        if self.gramatica:
-            analisador_ll1 = AnalisadorLL1(self.gramatica, handler)
-            tabela = analisador_ll1.construir_tabela()
-
-            parser = ParserLL1(tabela, self.gramatica)
-            resultado = parser.parsear(tokens)
-
-            if resultado and not completo:
-                print("SENTENÇA ACEITA!")
-                parser.imprimir_derivacao()
-            elif not resultado:
-                print("ERRO SINTÁTICO!")
-
-            if completo:
-                return resultado, handler, analisador_ll1, parser
-
-            return resultado
-    """
