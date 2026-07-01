@@ -359,6 +359,12 @@ class AnalisadorSintatico:
                         if self.escopo_atual.reduzir_escopo()
                         else self.escopo_atual
                     )
+                    
+                if lexema == "break":
+                    if self.escopo_atual.tipo not in {"for", "while"}:
+                        raise ValueError(
+                            f"Token 'break' fora de loop em escopo {self.escopo_atual.numero}"
+                        )
 
                 tokens_processados.append((lexema, tipo_gramatica))
             else:
