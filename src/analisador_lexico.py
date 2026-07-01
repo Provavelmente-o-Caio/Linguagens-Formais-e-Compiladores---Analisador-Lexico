@@ -79,18 +79,40 @@ class AnalisadorLexico:
         caracteres = []
         i = 0
 
+        def escapar_literal(ch: str) -> str:
+            if ch in {"\\", "|", "(", ")", "*", "+", "?", "."}:
+                return "\\" + ch
+            return ch
+
         while i < len(conteudo):
+            if conteudo[i] == "\\" and i + 1 < len(conteudo):
+                escape = conteudo[i + 1]
+
+                if escape == "t":
+                    caracteres.append(escapar_literal("\t"))
+                elif escape == "n":
+                    caracteres.append(escapar_literal("\n"))
+                elif escape == "r":
+                    caracteres.append(escapar_literal("\r"))
+                else:
+                    caracteres.append(escapar_literal(escape))
+
+                i += 2
+                continue
+
             # Verifica se é um range (x-y)
             if i + 2 < len(conteudo) and conteudo[i + 1] == "-":
                 inicio = conteudo[i]
                 fim = conteudo[i + 2]
 
                 # Expandir range
-                caracteres.extend(self.expandir_caracter(inicio, fim))
+                caracteres.extend(
+                    escapar_literal(ch) for ch in self.expandir_caracter(inicio, fim)
+                )
                 i += 3  # Pula início, '-', e fim
             else:
                 # Caractere individual
-                caracteres.append(conteudo[i])
+                caracteres.append(escapar_literal(conteudo[i]))
                 i += 1
 
         return caracteres
@@ -292,45 +314,73 @@ class AnalisadorLexico:
     def analisar(self) -> list[tuple[str, str]]:
         """Realiza análise léxica de um arquivo fonte.
 
-        Tokeniza cada palavra do arquivo usando o autômato unificado.
-        Linhas começando com # ou vazias são ignoradas.
+        Percorre cada linha caractere por caractere, ignorando espaços em branco.
 
         Returns:
             Lista de tuplas (lexema, padrão) ou (lexema, "erro!") para tokens inválidos.
         """
         tokens: list[tuple[str, str]] = []
-        for num_linha, linha in enumerate(self.entrada_texto, 1):
-            linha = linha.strip()
 
-            if linha.startswith("#") or not linha:
+        for num_linha, linha in enumerate(self.entrada_texto, 1):
+            linha = linha.rstrip("\n")
+
+            if not linha or linha.lstrip().startswith("#"):
                 continue
 
-            palavras = linha.split()
+            coluna = 0
+            while coluna < len(linha):
+                if linha[coluna].isspace():
+                    coluna += 1
+                    continue
 
-            for palavra in palavras:
-                token = self.tokenizar(palavra)
+                token, consumido = self.tokenizar(linha, coluna)
                 tokens.append(token)
                 print(f"<{token[0]}, {token[1]}>")
 
+                if token[1] == "erro!":
+                    print(
+                        f"Erro léxico na linha {num_linha}, coluna {coluna + 1}: "
+                        f"'{linha[coluna:]}'"
+                    )
+                    self.ultima_lista_tokens = tokens
+                    return tokens
+
+                coluna += consumido
+
+        self.ultima_lista_tokens = tokens
         return tokens
 
-    def tokenizar(self, palavra: str):
-        """Tokeniza uma palavra usando o autômato unificado.
+    def tokenizar(self, texto: str, inicio: int = 0) -> tuple[tuple[str, str], int]:
+        """Tokeniza um prefixo de texto usando o autômato unificado.
 
-        Implementa longest match: consome o maior prefixo válido da palavra.
+        Implementa longest match: consome o maior prefixo válido a partir de `inicio`.
 
         Args:
-            palavra: String a ser tokenizada.
+            texto: String a ser tokenizada.
+            inicio: Posição inicial da leitura.
 
         Returns:
-            Tupla (lexema, padrão) se reconhecido, ou (lexema, "erro!") caso contrário.
+            Um par `((lexema, padrão), consumido)`.
+            Se não reconhecer, retorna `((lexema, "erro!"), consumido)`.
         """
+        if self.automato_unificado is None:
+            raise ValueError("Automato unificado não foi gerado")
+
+        if inicio >= len(texto):
+            return ("", "erro!"), 0
+
         estado_atual = self.automato_unificado.estado_inicial
 
         ultimo_estado_final = None
         ultima_posicao_valida = -1
 
-        for i, simbolo in enumerate(palavra):
+        i = inicio
+        while i < len(texto):
+            simbolo = texto[i]
+
+            if simbolo.isspace():
+                break
+
             proximo = self.automato_unificado.transicoes.get(
                 (estado_atual, simbolo), set()
             )
@@ -345,11 +395,20 @@ class AnalisadorLexico:
                 ultimo_estado_final = estado_atual
                 ultima_posicao_valida = i
 
-        if ultimo_estado_final and ultima_posicao_valida == len(palavra) - 1:
+            i += 1
+
+        if ultimo_estado_final is not None:
+            fim = ultima_posicao_valida + 1
+            lexema = texto[inicio:fim]
             padrao = self.mapa_estados_padroes.get(ultimo_estado_final, "desconhecido")
-            return palavra, padrao
-        else:
-            return palavra, "erro!"
+            return (lexema, padrao), max(fim - inicio, 1)
+
+        fim = inicio + 1
+        while fim < len(texto) and not texto[fim].isspace():
+            fim += 1
+
+        lexema = texto[inicio:fim]
+        return (lexema, "erro!"), max(fim - inicio, 1)
 
     def atualizar_mapeamento(self, mapeamento: dict[Estado, frozenset[Estado]]):
         """Atualiza mapeamento de estados para padrões após determinização.
